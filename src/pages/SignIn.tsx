@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 const SignIn = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +19,12 @@ const SignIn = () => {
       return;
     }
     toast.success("Login successful! Redirecting...");
+    
+    // In a real application, we would authenticate with a backend
+    // For now, just redirect to the dashboard
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1000);
   };
 
   return (

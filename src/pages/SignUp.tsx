@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,7 +19,13 @@ const SignUp = () => {
       toast.error("Please fill in all fields");
       return;
     }
-    toast.success("Account created! Please check your email for verification.");
+    toast.success("Account created! Redirecting to dashboard.");
+    
+    // In a real application, we would register with a backend
+    // For now, just redirect to the dashboard
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1000);
   };
 
   return (
