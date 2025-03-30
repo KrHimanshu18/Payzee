@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				crypto: {
+					'blue': '#4D9FFF',
+					'green': '#4DFF91',
+					'orange': '#FF7C4D',
+					'purple': '#B54DFF',
+					'dark': '#0F0F13',
+					'darker': '#09090D',
 				}
 			},
 			borderRadius: {
@@ -84,11 +93,48 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': {
+						opacity: '1',
+						filter: 'brightness(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						filter: 'brightness(1.2)'
+					}
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-10px)'
+					}
+				},
+				'fade-in-up': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(20px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
+				'float': 'float 6s ease-in-out infinite',
+				'fade-in-up': 'fade-in-up 0.5s ease-out forwards'
+			},
+			backgroundImage: {
+				'hero-gradient': 'radial-gradient(circle at 50% 50%, rgba(77, 159, 255, 0.15) 0%, rgba(15, 15, 19, 0) 70%)',
+				'glow-green': 'radial-gradient(circle at 50% 0%, rgba(77, 255, 145, 0.4) 0%, rgba(15, 15, 19, 0) 70%)',
+				'glow-blue': 'radial-gradient(circle at 50% 50%, rgba(77, 159, 255, 0.2) 0%, rgba(15, 15, 19, 0) 70%)',
+				'glow-orange': 'radial-gradient(circle at 50% 50%, rgba(255, 124, 77, 0.2) 0%, rgba(15, 15, 19, 0) 70%)',
 			}
 		}
 	},
