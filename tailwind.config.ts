@@ -121,6 +121,14 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'pulse': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.5'
+					}
 				}
 			},
 			animation: {
@@ -128,7 +136,8 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'float': 'float 6s ease-in-out infinite',
-				'fade-in-up': 'fade-in-up 0.5s ease-out forwards'
+				'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+				'pulse': 'pulse 3s ease-in-out infinite'
 			},
 			backgroundImage: {
 				'hero-gradient': 'radial-gradient(circle at 50% 50%, rgba(77, 159, 255, 0.15) 0%, rgba(15, 15, 19, 0) 70%)',
