@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
@@ -9,9 +8,9 @@ import { toast } from "sonner";
 const SignUp = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,11 +19,11 @@ const SignUp = () => {
       return;
     }
     toast.success("Account created! Redirecting to dashboard.");
-    
+
     // In a real application, we would register with a backend
     // For now, just redirect to the dashboard
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }, 1000);
   };
 
@@ -38,7 +37,10 @@ const SignUp = () => {
 
         <form onSubmit={handleSignUp} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-300"
+            >
               Full Name
             </label>
             <div className="relative">
@@ -54,9 +56,12 @@ const SignUp = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300"
+            >
               Email address
             </label>
             <div className="relative">
@@ -72,9 +77,12 @@ const SignUp = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300"
+            >
               Password
             </label>
             <div className="relative">
@@ -93,11 +101,15 @@ const SignUp = () => {
                 className="absolute right-3 top-3 text-gray-400"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
-          
+
           <div className="flex items-center">
             <input
               id="terms"
@@ -107,25 +119,37 @@ const SignUp = () => {
             />
             <label htmlFor="terms" className="ml-2 text-sm text-gray-300">
               I agree to the{" "}
-              <Link to="/terms" className="text-crypto-blue hover:text-crypto-blue/80">
+              <Link
+                to="/terms"
+                className="text-crypto-blue hover:text-crypto-blue/80"
+              >
                 Terms
               </Link>{" "}
               and{" "}
-              <Link to="/privacy" className="text-crypto-blue hover:text-crypto-blue/80">
+              <Link
+                to="/privacy"
+                className="text-crypto-blue hover:text-crypto-blue/80"
+              >
                 Privacy Policy
               </Link>
             </label>
           </div>
-          
-          <Button type="submit" className="w-full bg-crypto-green hover:bg-crypto-green/90 text-black py-6">
+
+          <Button
+            type="submit"
+            className="w-full bg-crypto-green hover:bg-crypto-green/90 text-black py-6"
+          >
             Create account
           </Button>
         </form>
-        
+
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-400">
             Already have an account?{" "}
-            <Link to="/sign-in" className="text-crypto-blue hover:text-crypto-blue/80 font-medium">
+            <Link
+              to="/sign-in"
+              className="text-crypto-blue hover:text-crypto-blue/80 font-medium"
+            >
               Sign in
             </Link>
           </p>

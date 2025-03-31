@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-const Index = () => {
+const WalletPage = () => {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
@@ -197,7 +197,7 @@ const Index = () => {
               <span className="relative">Home</span>
             </Link>
             <Link
-              to="/scan"
+              to="/scanpay"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors duration-300"
             >
               <Scan size={18} />
@@ -611,4 +611,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default WalletPage;

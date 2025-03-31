@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
@@ -9,8 +8,8 @@ import { toast } from "sonner";
 const SignIn = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,11 +18,11 @@ const SignIn = () => {
       return;
     }
     toast.success("Login successful! Redirecting...");
-    
+
     // In a real application, we would authenticate with a backend
     // For now, just redirect to the dashboard
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }, 1000);
   };
 
@@ -37,7 +36,10 @@ const SignIn = () => {
 
         <form onSubmit={handleSignIn} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300"
+            >
               Email address
             </label>
             <div className="relative">
@@ -53,13 +55,19 @@ const SignIn = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-300"
+              >
                 Password
               </label>
-              <Link to="/forgot-password" className="text-sm text-crypto-blue hover:text-crypto-blue/80">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-crypto-blue hover:text-crypto-blue/80"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -79,11 +87,15 @@ const SignIn = () => {
                 className="absolute right-3 top-3 text-gray-400"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
-          
+
           <div className="flex items-center">
             <input
               id="remember"
@@ -94,16 +106,22 @@ const SignIn = () => {
               Remember me
             </label>
           </div>
-          
-          <Button type="submit" className="w-full bg-crypto-blue hover:bg-crypto-blue/90 text-white py-6">
+
+          <Button
+            type="submit"
+            className="w-full bg-crypto-blue hover:bg-crypto-blue/90 text-white py-6"
+          >
             Sign in
           </Button>
         </form>
-        
+
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-400">
             Don't have an account yet?{" "}
-            <Link to="/sign-up" className="text-crypto-blue hover:text-crypto-blue/80 font-medium">
+            <Link
+              to="/sign-up"
+              className="text-crypto-blue hover:text-crypto-blue/80 font-medium"
+            >
               Sign up
             </Link>
           </p>
