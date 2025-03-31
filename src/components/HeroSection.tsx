@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ArrowRight, IndianRupee, Bitcoin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -44,9 +45,11 @@ const HeroSection = () => {
             className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in-up opacity-0"
             style={{ animationDelay: "0.4s" }}
           >
-            <Button className="bg-crypto-blue hover:bg-crypto-blue/90 text-white px-8 py-6 rounded-full text-lg flex items-center gap-2">
-              Get Started <ChevronRight className="h-5 w-5" />
-            </Button>
+            <Link to="/sign-up">
+              <Button className="bg-crypto-blue hover:bg-crypto-blue/90 text-white px-8 py-6 rounded-full text-lg flex items-center gap-2">
+                Get Started <ChevronRight className="h-5 w-5" />
+              </Button>
+            </Link>
             <Button
               variant="outline"
               className="border-white/20 hover:bg-white/5 text-white px-8 py-6 rounded-full text-lg"

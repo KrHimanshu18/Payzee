@@ -179,7 +179,7 @@ const WalletPage = () => {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">CryptoQR</span>
+              <span className="text-xl font-bold">ZollPay</span>
             </Link>
           </div>
 
@@ -205,7 +205,7 @@ const WalletPage = () => {
               <span>Wallet</span>
             </Link>
             <Link
-              to="/history"
+              to="/transaction"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
               <History size={18} />
@@ -551,10 +551,12 @@ const WalletPage = () => {
                   </div>
                 ))}
 
-                <Button className="w-full mt-4 bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
-                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                  <span className="relative">View All Transactions</span>
-                </Button>
+                <Link to="/transaction">
+                  <Button className="w-full mt-4 bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                    <span className="relative">View All Transactions</span>
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="crypto-card flex flex-col items-center justify-center py-16 relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl hover:border-white/20 transition-all duration-300 group">
@@ -576,7 +578,7 @@ const WalletPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-gray-500">
-              © 2023 CryptoQR. All rights reserved.
+              © 2023 ZollPay. All rights reserved.
             </div>
             <div className="flex items-center gap-6">
               <Link

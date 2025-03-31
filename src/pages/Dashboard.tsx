@@ -75,7 +75,7 @@ const Dashboard = () => {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">CryptoQR</span>
+              <span className="text-xl font-bold">ZollPay</span>
             </Link>
           </div>
 
@@ -207,7 +207,7 @@ const Dashboard = () => {
                         <div className="relative rounded-3xl overflow-hidden border-4 border-white/10 bg-crypto-dark shadow-lg">
                           <img
                             src="public/lovable-uploads/1243437e-3794-4ab8-b120-e41283d88334.png"
-                            alt="CryptoQR App"
+                            alt="ZollPay App"
                             className="w-full h-auto"
                           />
                         </div>
@@ -296,7 +296,7 @@ const Dashboard = () => {
                     Track all your transaction history and monitor your payment
                     status
                   </p>
-                  <Link to="/history">
+                  <Link to="/transaction">
                     <Button
                       variant="link"
                       className="px-0 text-crypto-orange hover:text-crypto-orange/80 flex items-center gap-2"
@@ -566,18 +566,20 @@ const Dashboard = () => {
                     Ready to Experience the Future of Crypto?
                   </h2>
                   <p className="text-xl text-gray-300 mb-8">
-                    Explore all the features CryptoQR has to offer. Manage your
+                    Explore all the features ZollPay has to offer. Manage your
                     crypto portfolio, make transactions, and track your history
                     all in one place.
                   </p>
                   <div className="flex flex-wrap gap-4">
-                    <Button
-                      size="lg"
-                      className="bg-crypto-blue hover:bg-crypto-blue/90 text-white rounded-full px-8 h-14"
-                    >
-                      Get Started
-                      <ChevronRight size={20} />
-                    </Button>
+                    <Link to="/wallet">
+                      <Button
+                        size="lg"
+                        className="bg-crypto-blue hover:bg-crypto-blue/90 text-white rounded-full px-8 h-14"
+                      >
+                        Get Started
+                        <ChevronRight size={20} />
+                      </Button>
+                    </Link>
                     <Button
                       size="lg"
                       variant="outline"
