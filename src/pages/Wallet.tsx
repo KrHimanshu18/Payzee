@@ -158,61 +158,55 @@ const WalletPage = () => {
       </div>
 
       {/* Header/Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/30 border-b border-white/10 shadow-lg shadow-black/5">
+      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/20 border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="crypto-icon relative">
-                <div className="absolute inset-0 bg-[#33C3F0] blur-[8px] rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-                <div className="relative bg-gradient-to-r from-[#1EAEDB] to-[#33C3F0] w-10 h-10 rounded-full flex items-center justify-center border border-white/20 shadow-lg">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-white"
-                  >
-                    <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
-                    <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
-                  </svg>
-                </div>
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <div className="crypto-icon blue-glow">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-crypto-blue"
+                >
+                  <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
+                  <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
+                </svg>
               </div>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70">
-                CryptoQR
-              </span>
+              <span className="text-xl font-bold">CryptoQR</span>
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-6 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10 shadow-inner shadow-white/5">
+          <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
             <Link
-              to="/"
-              className="flex items-center gap-1 text-white relative px-3 py-1 rounded-full"
+              to="/dashboard"
+              className="flex items-center gap-1 text-white"
             >
-              <div className="absolute inset-0 bg-white/10 rounded-full"></div>
-              <span className="relative">Home</span>
+              <span>Home</span>
             </Link>
             <Link
               to="/scanpay"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors duration-300"
+              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
               <Scan size={18} />
-              <span>Scan</span>
+              <span>Scan & Pay</span>
             </Link>
             <Link
               to="/wallet"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors duration-300"
+              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
               <Wallet size={18} />
               <span>Wallet</span>
             </Link>
             <Link
               to="/history"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors duration-300"
+              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
               <History size={18} />
               <span>History</span>
@@ -220,19 +214,19 @@ const WalletPage = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10 shadow-inner shadow-white/5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#1EAEDB] to-[#33C3F0] flex items-center justify-center text-white font-medium shadow-lg shadow-[#33C3F0]/20">
+            <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span className="text-white/80">John Doe</span>
+              <span>John Doe</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white hover:bg-white/10 transition-all duration-300"
+                className="text-white hover:bg-white/10"
               >
-                <LogOut size={16} className="mr-1" />
+                <LogOut size={16} />
                 <span>Logout</span>
               </Button>
             </Link>

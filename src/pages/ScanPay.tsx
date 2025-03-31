@@ -15,6 +15,7 @@ import {
   Send,
   Bitcoin,
   DollarSign,
+  LogOut,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,11 @@ function ScanPay() {
     }
   };
 
+  const handleLogout = () => {
+    toast.success("Logged out successfully");
+    // In a real app, we would handle actual logout logic here
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#1A1F2C] via-[#1E2334] to-[#131722]">
       {/* Starry Background */}
@@ -232,7 +238,7 @@ function ScanPay() {
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/20 border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/dashboard" className="flex items-center gap-2">
               <div className="crypto-icon blue-glow">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -256,13 +262,15 @@ function ScanPay() {
 
           <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
             <Link
-              to="/"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
+              to="/dashboard"
+              className="flex items-center gap-1 text-white"
             >
-              <Home size={18} />
               <span>Home</span>
             </Link>
-            <Link to="/scanpay" className="flex items-center gap-1 text-white">
+            <Link
+              to="/scanpay"
+              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
+            >
               <Scan size={18} />
               <span>Scan & Pay</span>
             </Link>
@@ -282,11 +290,23 @@ function ScanPay() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
-            <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
-              {user?.name?.charAt(0) || "U"}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
+                J
+              </div>
+              <span>John Doe</span>
             </div>
-            <span>{user?.name || "User"}</span>
+            <Link to="/" onClick={handleLogout}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/10"
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </header>

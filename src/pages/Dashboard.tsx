@@ -101,7 +101,7 @@ const Dashboard = () => {
               <span>Wallet</span>
             </Link>
             <Link
-              to="/history"
+              to="/transaction"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
               <History size={18} />
