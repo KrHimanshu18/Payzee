@@ -206,7 +206,7 @@ const Dashboard = () => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-crypto-blue to-crypto-purple rounded-3xl blur-lg opacity-30"></div>
                         <div className="relative rounded-3xl overflow-hidden border-4 border-white/10 bg-crypto-dark shadow-lg">
                           <img
-                            src="public/lovable-uploads/1243437e-3794-4ab8-b120-e41283d88334.png"
+                            src="/lovable-uploads/1243437e-3794-4ab8-b120-e41283d88334.png"
                             alt="ZollPay App"
                             className="w-full h-auto"
                           />
@@ -593,7 +593,7 @@ const Dashboard = () => {
                   <div className="relative">
                     <div className="absolute inset-0 bg-glow-blue rounded-full filter blur-xl opacity-70"></div>
                     <img
-                      src="public/lovable-uploads/23aa057c-33a8-4930-bcb2-7b8f10af13ff.png"
+                      src="/lovable-uploads/23aa057c-33a8-4930-bcb2-7b8f10af13ff.png"
                       alt="Mobile App"
                       className="relative z-10 w-60 h-auto rounded-2xl border-4 border-white/10 shadow-lg"
                     />
