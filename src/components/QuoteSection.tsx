@@ -38,7 +38,7 @@ const QuoteSection = () => {
             </div>
 
             <blockquote className="text-2xl font-light italic mb-8">
-              "CryptoQR has completely changed how I use my crypto holdings. Now
+              "ZollPay has completely changed how I use my crypto holdings. Now
               I can easily pay at any local store with UPI QR codes using my
               crypto. The conversion is instant and the rates are excellent."
             </blockquote>
