@@ -20,4 +20,11 @@ model User{
   name     String
   email    String @unique
   password String
+  account AccountDetails[]
+}
+
+model AccountDetails{
+  id String @id @default(cuid())
+  walletAddress String?
+  user User @relation(fields: [id], references: [id])
 }

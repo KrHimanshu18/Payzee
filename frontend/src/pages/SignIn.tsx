@@ -11,19 +11,29 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
-    toast.success("Login successful! Redirecting...");
 
-    // In a real application, we would authenticate with a backend
-    // For now, just redirect to the dashboard
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
+    try {
+      const res = await fetch(`/login?email=${email}&password=${password}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+
+      toast.success("Login successful! Redirecting...");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error) {
+      toast.error("Login failed. Try again.");
+    }
   };
 
   return (

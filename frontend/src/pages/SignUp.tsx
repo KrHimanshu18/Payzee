@@ -12,19 +12,34 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
-    toast.success("Account created! Redirecting to dashboard.");
 
-    // In a real application, we would register with a backend
-    // For now, just redirect to the dashboard
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
+    try {
+      const res = await fetch("/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+
+      toast.success("Account created! Redirecting to dashboard.");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (error) {
+      toast.error("Signup failed. Try again.");
+    }
   };
 
   return (
