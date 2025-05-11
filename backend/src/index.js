@@ -6,8 +6,9 @@ import cors from "cors";
 
 const { PrismaClient } = pkg;
 const app = express();
-const port = 8080;
+const port = 8081;
 app.use(bodyParser.json());
+app.use(cors());
 const prisma = new PrismaClient();
 
 app.get("/login", async (req, res) => {
@@ -55,13 +56,14 @@ app.post("/signup", async (req, res) => {
       where: { email: body.email },
     });
     if (userExists) {
+      console.log("Email already registered", body.email);
       return res.status(409).json({ message: "Email already registered" });
     }
 
     const hashedPassword = await bcrypt.hash(body.password, 10);
     const user = await prisma.user.create({
       data: {
-        name: body.username,
+        name: body.name,
         email: body.email,
         password: hashedPassword,
       },
@@ -82,5 +84,5 @@ app.post("/signup", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:8080`);
+  console.log(`Server running on http://localhost:${port}`);
 });

@@ -10,6 +10,7 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const url = "http://localhost:8081";
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +20,9 @@ const SignIn = () => {
     }
 
     try {
-      const res = await fetch(`/login?email=${email}&password=${password}`);
+      const res = await fetch(
+        `${url}/login?email=${email}&password=${password}`
+      );
       const data = await res.json();
 
       if (!res.ok) {
@@ -29,7 +32,9 @@ const SignIn = () => {
 
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/dashboard", {
+          state: data,
+        });
       }, 1000);
     } catch (error) {
       toast.error("Login failed. Try again.");

@@ -11,6 +11,7 @@ const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const url = "http://localhost:8081";
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,10 +21,10 @@ const SignUp = () => {
     }
 
     try {
-      const res = await fetch("/signup", {
+      const res = await fetch(`${url}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name, email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
