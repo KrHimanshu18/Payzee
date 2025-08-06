@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Home,
   Scan,
@@ -31,6 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { LoginContext } from "@/context/LoginContext";
 
 // Mock transaction data
 const mockTransactions = [
@@ -136,6 +137,7 @@ const mockTransactions = [
 
 function Transaction() {
   const navigate = useNavigate();
+  const { name } = useContext(LoginContext);
   const [transactions, setTransactions] = useState(mockTransactions);
   const [selectedTx, setSelectedTx] = useState<
     (typeof mockTransactions)[0] | null
@@ -298,7 +300,7 @@ function Transaction() {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>John Doe</span>
+              <span>{name}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button

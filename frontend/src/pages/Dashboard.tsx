@@ -22,7 +22,7 @@ const Dashboard = () => {
   const handleLogout = () => {
     toast.success("Logged out successfully");
   };
-  const { username } = useContext(LoginContext);
+  const { name } = useContext(LoginContext);
   const location = useLocation();
   const [walletAddress, setWalletAddress] = useState("");
   useEffect(() => {
@@ -123,7 +123,7 @@ const Dashboard = () => {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>{username}</span>
+              <span>{name}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button

@@ -19,38 +19,38 @@ app.get("/login", async (req, res) => {
   }
 
   try {
-    // const user = await prisma.user.findFirst({
-    //   where: { email },
-    // });
+    const user = await prisma.user.findFirst({
+      where: { email },
+    });
 
-    // if (!user) {
-    //   return res.status(404).json({ message: "User not found" });
-    // }
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    // const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
-    // if (!isPasswordCorrect) {
-    //   return res.status(401).json({
-    //     message: "Authentication failed",
-    //   });
-    // }
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        message: "Authentication failed",
+      });
+    }
 
-    // console.log(user);
-    const user = {
-      id: "Kr_Himanshu", // auto-generated usually
-      name: "Himanshu Kumar",
-      email: "krhimanshu@example.com",
-      password: "hashedpassword123",
-      walletAddress: "not provided yet",
-      account: [
-        {
-          id: "acc_001",
-          accountNumber: "1234567890",
-          bankName: "Demo Bank",
-          userId: "user_123abc",
-        },
-      ],
-    };
+    console.log(user);
+    // const user = {
+    //   id: "Kr_Himanshu", // auto-generated usually
+    //   name: "Himanshu Kumar",
+    //   email: "krhimanshu@example.com",
+    //   password: "hashedpassword123",
+    //   walletAddress: "not provided yet",
+    //   account: [
+    //     {
+    //       id: "acc_001",
+    //       accountNumber: "1234567890",
+    //       bankName: "Demo Bank",
+    //       userId: "user_123abc",
+    //     },
+    //   ],
+    // };
 
     res.status(200).json({
       message: "Logged in Successfully",
@@ -91,6 +91,7 @@ app.post("/signup", async (req, res) => {
       user,
     });
   } catch (error) {
+    console.log(body.name, body.email, body.password);
     console.error(error);
     res.status(500).json({
       message: "Failed to create the user",

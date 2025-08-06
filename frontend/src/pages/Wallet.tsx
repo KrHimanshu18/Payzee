@@ -12,9 +12,11 @@ import {
   CircleCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { LoginContext } from "@/context/LoginContext";
 
 const WalletPage = () => {
+  const { name } = useContext(LoginContext);
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
@@ -218,7 +220,7 @@ const WalletPage = () => {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>John Doe</span>
+              <span>{name}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button

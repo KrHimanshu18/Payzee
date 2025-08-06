@@ -9,13 +9,13 @@ import { LoginContext } from "@/context/LoginContext";
 const SignUp = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const { username, email, password, setUsername, setEmail, setPassword } =
+  const { name, email, password, setName, setEmail, setPassword } =
     useContext(LoginContext);
   const url = "http://localhost:8081";
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !email || !password) {
+    if (!name || !email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -24,7 +24,7 @@ const SignUp = () => {
       const res = await fetch(`${url}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
@@ -39,6 +39,7 @@ const SignUp = () => {
         navigate("/dashboard");
       }, 1000);
     } catch (error) {
+      console.log(name, email, password);
       toast.error("Signup failed. Try again.");
     }
   };
@@ -66,8 +67,8 @@ const SignUp = () => {
                 type="text"
                 placeholder="John Doe"
                 className="pl-10 bg-crypto-dark/50 border-white/10 text-white"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>

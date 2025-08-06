@@ -49,7 +49,7 @@ declare global {
 function ScanPay() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { username, email, password, setUsername, setEmail, setPassword } =
+  const { name, email, password, setName, setEmail, setPassword } =
     useContext(LoginContext);
   const [walletAddress, setWalletAddress] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -301,7 +301,7 @@ function ScanPay() {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>{username}</span>
+              <span>{name}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button
