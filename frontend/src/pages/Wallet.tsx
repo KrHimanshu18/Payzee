@@ -78,17 +78,17 @@ const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
 // --- Main Wallet Page Component ---
 
 const WalletPage = () => {
-  const { name, walletAddress, setWalletAddress } = useContext(LoginContext);
+  const { name, email, walletAddress, setWalletAddress } =
+    useContext(LoginContext);
 
-  // Use state to hold wallet data, initialized with mock data.
   const [walletData, setWalletData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const url = "http://localhost:8081";
 
   // --- MOCK DATA ---
-  // In a real app, this would be fetched from your backend or a blockchain service.
   const mockWalletDetails = {
     totalBalance: "125,000",
     cryptos: [
@@ -163,6 +163,34 @@ const WalletPage = () => {
     ],
   };
   // --- END MOCK DATA ---
+  const updateWalletAddressOnBackend = async (name, address) => {
+    toast.info("Saving your wallet address...", { id: "set-address" });
+    try {
+      const res = await fetch(
+        `${url}/setWalletAddress?name=${name}&email=${email}&walletAddress=${address}`
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+      // Wallet address: 0x7F5E85B85CF88cFcEe9613368636F45B880e62CB
+
+      console.log("Backend response:", data);
+
+      toast.success("Wallet address saved successfully!", {
+        id: "set-address",
+      });
+      return true;
+    } catch (error) {
+      console.error("Failed to set wallet address:", error);
+      toast.error("Could not save wallet address. Please try again.", {
+        id: "set-address",
+      });
+      return false;
+    }
+  };
 
   /**
    * Fetches wallet details from a blockchain service.
@@ -171,36 +199,7 @@ const WalletPage = () => {
   const fetchWalletDetails = async (address) => {
     setIsLoading(true);
     toast.info("Fetching wallet details...", { id: "fetch-wallet" });
-
-    // --- REAL API CALL WOULD GO HERE ---
-    // In a real-world application, you would use a library like `ethers.js` or `web3.js`
-    // to interact with a blockchain node provider like Alchemy, Infura, or an API service
-    // like Etherscan to get the actual balance and transaction history.
-    // Example using a hypothetical API service:
-    /*
-    try {
-      const response = await fetch(`https://api.your-crypto-service.com/wallet/${address}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch wallet data.');
-      }
-      const data = await response.json();
-      setWalletData({
-        totalBalance: data.totalFiatValue,
-        cryptos: data.assets,
-        recentTransactions: data.transactions,
-        walletAddress: address,
-      });
-      toast.success("Wallet details updated!", { id: "fetch-wallet" });
-    } catch (error) {
-      console.error("Failed to fetch wallet details:", error);
-      toast.error("Could not fetch wallet details.", { id: "fetch-wallet" });
-      setWalletData(null); // Clear data on error
-    } finally {
-      setIsLoading(false);
-    }
-    */
-
-    // For demonstration, we'll simulate a network request and use mock data.
+    // Simulate a network request and use mock data.
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setWalletData({ ...mockWalletDetails, walletAddress: address });
     toast.success("Wallet details loaded!", { id: "fetch-wallet" });
@@ -211,7 +210,6 @@ const WalletPage = () => {
     if (walletAddress) {
       fetchWalletDetails(walletAddress);
     } else {
-      // If no wallet address in context, open the modal.
       setIsLoading(false);
       setAddressModalOpen(true);
     }
@@ -222,9 +220,13 @@ const WalletPage = () => {
     // In a real app, we would handle actual logout logic here
   };
 
-  const handleModalSubmit = (newAddress) => {
-    setWalletAddress(newAddress); // Update context
-    setAddressModalOpen(false); // Close modal
+  const handleModalSubmit = async (newAddress) => {
+    const isSuccess = await updateWalletAddressOnBackend(name, newAddress);
+
+    if (isSuccess) {
+      setWalletAddress(newAddress); // Update context
+      setAddressModalOpen(false); // Close modal
+    }
   };
 
   const copyAddress = (address) => {
@@ -242,7 +244,6 @@ const WalletPage = () => {
     setExpandedCard(expandedCard === index ? null : index);
   };
 
-  // Random animations for particle effects
   const getRandomAnimationDelay = () => `${Math.random() * 5}s`;
   const getRandomPosition = () => `${Math.random() * 100}%`;
 
@@ -334,7 +335,7 @@ const WalletPage = () => {
                 <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                   {name ? name.charAt(0).toUpperCase() : "U"}
                 </div>
-                <span>{name}</span>
+                <span>{name || "User"}</span>
               </div>
               <Link to="/" onClick={handleLogout}>
                 <Button

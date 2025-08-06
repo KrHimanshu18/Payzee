@@ -101,6 +101,38 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.post("/setWalletAddress", async (req, res) => {
+  const { email, walletAddress } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update the wallet address in AccountDetails
+    const updatedAccount = await prisma.accountDetails.update({
+      where: { email: user.email },
+      data: { walletAddress },
+    });
+
+    res.status(200).json({
+      message: "Wallet address updated successfully",
+      account: updatedAccount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to update wallet address",
+      error: error.message,
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
