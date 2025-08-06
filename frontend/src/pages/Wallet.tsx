@@ -1,36 +1,96 @@
-import { Bitcoin, CircleDollarSign, DollarSign, Coins } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Wallet, Scan, History, LogOut } from "lucide-react";
-import { toast } from "sonner";
-import { Plus, RefreshCw } from "lucide-react";
 import {
+  Bitcoin,
+  CircleDollarSign,
+  DollarSign,
+  Coins,
+  Wallet,
+  Scan,
+  History,
+  LogOut,
+  Plus,
+  RefreshCw,
   QrCode,
   Copy,
   ChevronDown,
   ChevronUp,
   CircleCheck,
+  X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { LoginContext } from "@/context/LoginContext";
 
-const WalletPage = () => {
-  const { name } = useContext(LoginContext);
-  const [expandedCard, setExpandedCard] = useState<number | null>(null);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+// --- Helper Components ---
 
-  const handleLogout = () => {
-    toast.success("Logged out successfully");
-    // In a real app, we would handle actual logout logic here
+// Modal for entering wallet address
+const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
+  const [address, setAddress] = useState("");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (address.trim()) {
+      onSubmit(address);
+    } else {
+      toast.error("Please enter a valid wallet address.");
+    }
   };
 
-  const currency = "₹";
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+      <div className="bg-gradient-to-br from-[#1A1F2C] to-[#131722] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md m-4 p-8 relative animate-fade-in-up">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+        >
+          <X size={20} />
+        </button>
+        <h2 className="text-2xl font-bold mb-4 text-white">
+          Enter Your Wallet Address
+        </h2>
+        <p className="text-gray-400 mb-6">
+          To view your assets, please provide your public wallet address.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="0x..."
+            className="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 mb-6 text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#33C3F0]"
+          />
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20"
+          >
+            Submit Address
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
-  // Mock data for the wallet
-  const walletData = {
+// --- Main Wallet Page Component ---
+
+const WalletPage = () => {
+  const { name, walletAddress, setWalletAddress } = useContext(LoginContext);
+
+  // Use state to hold wallet data, initialized with mock data.
+  const [walletData, setWalletData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddressModalOpen, setAddressModalOpen] = useState(false);
+  const [expandedCard, setExpandedCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  // --- MOCK DATA ---
+  // In a real app, this would be fetched from your backend or a blockchain service.
+  const mockWalletDetails = {
     totalBalance: "125,000",
-    walletAddress: "0x7F5E85B85CF88cFcEe9613368636F45B880e62CB",
     cryptos: [
       {
         name: "Bitcoin",
@@ -100,19 +160,74 @@ const WalletPage = () => {
         status: "completed",
         icon: <CircleDollarSign size={16} className="text-purple-500" />,
       },
-      {
-        type: "send",
-        crypto: "USDT",
-        amount: "50",
-        to: "TK9L... (Mike)",
-        date: "Oct 20, 2023",
-        status: "completed",
-        icon: <DollarSign size={16} className="text-green-500" />,
-      },
     ],
   };
+  // --- END MOCK DATA ---
 
-  const copyAddress = (address: string) => {
+  /**
+   * Fetches wallet details from a blockchain service.
+   * @param {string} address - The wallet address to fetch data for.
+   */
+  const fetchWalletDetails = async (address) => {
+    setIsLoading(true);
+    toast.info("Fetching wallet details...", { id: "fetch-wallet" });
+
+    // --- REAL API CALL WOULD GO HERE ---
+    // In a real-world application, you would use a library like `ethers.js` or `web3.js`
+    // to interact with a blockchain node provider like Alchemy, Infura, or an API service
+    // like Etherscan to get the actual balance and transaction history.
+    // Example using a hypothetical API service:
+    /*
+    try {
+      const response = await fetch(`https://api.your-crypto-service.com/wallet/${address}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch wallet data.');
+      }
+      const data = await response.json();
+      setWalletData({
+        totalBalance: data.totalFiatValue,
+        cryptos: data.assets,
+        recentTransactions: data.transactions,
+        walletAddress: address,
+      });
+      toast.success("Wallet details updated!", { id: "fetch-wallet" });
+    } catch (error) {
+      console.error("Failed to fetch wallet details:", error);
+      toast.error("Could not fetch wallet details.", { id: "fetch-wallet" });
+      setWalletData(null); // Clear data on error
+    } finally {
+      setIsLoading(false);
+    }
+    */
+
+    // For demonstration, we'll simulate a network request and use mock data.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setWalletData({ ...mockWalletDetails, walletAddress: address });
+    toast.success("Wallet details loaded!", { id: "fetch-wallet" });
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (walletAddress) {
+      fetchWalletDetails(walletAddress);
+    } else {
+      // If no wallet address in context, open the modal.
+      setIsLoading(false);
+      setAddressModalOpen(true);
+    }
+  }, [walletAddress]);
+
+  const handleLogout = () => {
+    toast.success("Logged out successfully");
+    // In a real app, we would handle actual logout logic here
+  };
+
+  const handleModalSubmit = (newAddress) => {
+    setWalletAddress(newAddress); // Update context
+    setAddressModalOpen(false); // Close modal
+  };
+
+  const copyAddress = (address) => {
     navigator.clipboard.writeText(address);
     toast.success("Address copied to clipboard");
   };
@@ -123,489 +238,518 @@ const WalletPage = () => {
     });
   };
 
-  const toggleCardExpand = (index: number) => {
+  const toggleCardExpand = (index) => {
     setExpandedCard(expandedCard === index ? null : index);
   };
 
   // Random animations for particle effects
-  const getRandomAnimationDelay = () => {
-    return `${Math.random() * 5}s`;
-  };
+  const getRandomAnimationDelay = () => `${Math.random() * 5}s`;
+  const getRandomPosition = () => `${Math.random() * 100}%`;
 
-  const getRandomPosition = () => {
-    return `${Math.random() * 100}%`;
-  };
+  const currency = "₹";
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-gradient-to-b from-[#131722] via-[#1A1F2C] to-[#131722] overflow-hidden">
-      {/* Animated background particles */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full bg-white/30 animate-pulse"
-            style={{
-              top: getRandomPosition(),
-              left: getRandomPosition(),
-              animationDelay: getRandomAnimationDelay(),
-              animationDuration: `${3 + Math.random() * 4}s`,
-            }}
-          ></div>
-        ))}
-
-        {/* Glow effects */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-[#8B5CF6]/10 blur-[120px]"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full bg-[#F97316]/10 blur-[120px]"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[#1EAEDB]/5 blur-[120px]"></div>
-      </div>
-
-      {/* Header/Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/20 border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="crypto-icon blue-glow">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-crypto-blue"
-                >
-                  <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
-                  <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
-                </svg>
-              </div>
-              <span className="text-xl font-bold">ZollPay</span>
-            </Link>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-1 text-white"
-            >
-              <span>Home</span>
-            </Link>
-            <Link
-              to="/scanpay"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
-            >
-              <Scan size={18} />
-              <span>Scan & Pay</span>
-            </Link>
-            <Link
-              to="/wallet"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
-            >
-              <Wallet size={18} />
-              <span>Wallet</span>
-            </Link>
-            <Link
-              to="/transaction"
-              className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
-            >
-              <History size={18} />
-              <span>History</span>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
-              <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
-                J
-              </div>
-              <span>{name}</span>
-            </div>
-            <Link to="/" onClick={handleLogout}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/10"
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </Button>
-            </Link>
-          </div>
+    <>
+      <WalletAddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setAddressModalOpen(false)}
+        onSubmit={handleModalSubmit}
+      />
+      <div className="min-h-screen flex flex-col relative bg-gradient-to-b from-[#131722] via-[#1A1F2C] to-[#131722] overflow-hidden">
+        {/* Background Effects */}
+        <div className="fixed inset-0 z-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-white/30 animate-pulse"
+              style={{
+                top: getRandomPosition(),
+                left: getRandomPosition(),
+                animationDelay: getRandomAnimationDelay(),
+                animationDuration: `${3 + Math.random() * 4}s`,
+              }}
+            ></div>
+          ))}
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-[#8B5CF6]/10 blur-[120px]"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full bg-[#F97316]/10 blur-[120px]"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[#1EAEDB]/5 blur-[120px]"></div>
         </div>
-      </header>
 
-      <main className="flex-grow container mx-auto px-4 pt-28 pb-16 relative z-10">
-        <div className="animate-fade-in">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
-            <div>
-              <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">
-                My Wallet
-              </h1>
-              <p className="text-gray-400">
-                Manage and track your cryptocurrency assets
-              </p>
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/20 border-b border-white/10">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Link to="/dashboard" className="flex items-center gap-2">
+                <div className="crypto-icon blue-glow">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-crypto-blue"
+                  >
+                    <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
+                    <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
+                  </svg>
+                </div>
+                <span className="text-xl font-bold">ZollPay</span>
+              </Link>
             </div>
-            <div className="flex items-center space-x-3 mt-6 md:mt-0">
-              <Button
-                variant="outline"
-                className="border-gray-700 bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-all duration-300 group"
+            <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-1 text-white"
               >
-                <RefreshCw
-                  size={18}
-                  className="mr-2 text-[#33C3F0] group-hover:rotate-180 transition-transform duration-500"
-                />
-                Refresh
-              </Button>
-              <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                <Plus size={18} className="mr-2 relative" />
-                <span className="relative">Add Wallet</span>
-              </Button>
+                <span>Home</span>
+              </Link>
+              <Link
+                to="/scanpay"
+                className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
+              >
+                <Scan size={18} />
+                <span>Scan & Pay</span>
+              </Link>
+              <Link
+                to="/wallet"
+                className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
+              >
+                <Wallet size={18} />
+                <span>Wallet</span>
+              </Link>
+              <Link
+                to="/transaction"
+                className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
+              >
+                <History size={18} />
+                <span>History</span>
+              </Link>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+                <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
+                  {name ? name.charAt(0).toUpperCase() : "U"}
+                </div>
+                <span>{name}</span>
+              </div>
+              <Link to="/" onClick={handleLogout}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/10"
+                >
+                  <LogOut size={16} />
+                  <span className="ml-2">Logout</span>
+                </Button>
+              </Link>
             </div>
           </div>
+        </header>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="crypto-card flex flex-col relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl group hover:shadow-2xl transition-all duration-500 hover:border-white/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#33C3F0]/10 to-purple-500/5 pointer-events-none"></div>
-              <div className="absolute -right-16 -top-16 w-32 h-32 bg-[#33C3F0]/20 rounded-full blur-[32px] group-hover:blur-[40px] transition-all duration-500"></div>
-
-              <div className="flex items-start justify-between mb-6 relative z-10 p-6">
+        {/* Main Content */}
+        <main className="flex-grow container mx-auto px-4 pt-28 pb-16 relative z-10">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <RefreshCw className="animate-spin text-[#33C3F0]" size={40} />
+            </div>
+          ) : !walletData ? (
+            <div className="text-center py-16">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                No Wallet Connected
+              </h2>
+              <p className="text-gray-400 mb-6">
+                Please enter your wallet address to see your assets.
+              </p>
+              <Button
+                onClick={() => setAddressModalOpen(true)}
+                className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90"
+              >
+                Enter Address
+              </Button>
+            </div>
+          ) : (
+            <div className="animate-fade-in">
+              {/* Page Header */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
                 <div>
-                  <p className="text-gray-400 mb-1">Total Balance</p>
-                  <p className="text-xs text-gray-500">
-                    Your total wallet balance in INR
+                  <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">
+                    My Wallet
+                  </h1>
+                  <p className="text-gray-400">
+                    Manage and track your cryptocurrency assets
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#33C3F0]/30 to-[#33C3F0]/10 flex items-center justify-center text-[#33C3F0] backdrop-blur-md border border-white/10 shadow-lg shadow-[#33C3F0]/10 group-hover:shadow-[#33C3F0]/20 transition-all duration-500">
-                  <Wallet size={20} />
+                <div className="flex items-center space-x-3 mt-6 md:mt-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchWalletDetails(walletAddress)}
+                    className="border-gray-700 bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-all duration-300 group"
+                  >
+                    <RefreshCw
+                      size={18}
+                      className="mr-2 text-[#33C3F0] group-hover:rotate-180 transition-transform duration-500"
+                    />
+                    Refresh
+                  </Button>
+                  <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                    <Plus size={18} className="mr-2 relative" />
+                    <span className="relative">Add Wallet</span>
+                  </Button>
                 </div>
               </div>
-              <h2
-                className={cn(
-                  "crypto-balance relative z-10 px-6 pb-6",
-                  walletData.totalBalance.length > 8 ? "text-3xl" : "text-5xl"
-                )}
-              >
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-300">
-                  {currency}
-                  {walletData.totalBalance}
+
+              {/* Balance & Address Cards */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                {/* Total Balance Card */}
+                <div className="crypto-card flex flex-col relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl group hover:shadow-2xl transition-all duration-500 hover:border-white/20">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#33C3F0]/10 to-purple-500/5 pointer-events-none"></div>
+                  <div className="absolute -right-16 -top-16 w-32 h-32 bg-[#33C3F0]/20 rounded-full blur-[32px] group-hover:blur-[40px] transition-all duration-500"></div>
+                  <div className="flex items-start justify-between mb-6 relative z-10 p-6">
+                    <div>
+                      <p className="text-gray-400 mb-1">Total Balance</p>
+                      <p className="text-xs text-gray-500">
+                        Your total wallet balance in INR
+                      </p>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-[#33C3F0]/30 to-[#33C3F0]/10 flex items-center justify-center text-[#33C3F0] backdrop-blur-md border border-white/10 shadow-lg shadow-[#33C3F0]/10 group-hover:shadow-[#33C3F0]/20 transition-all duration-500">
+                      <Wallet size={20} />
+                    </div>
+                  </div>
+                  <h2
+                    className={cn(
+                      "crypto-balance relative z-10 px-6 pb-6",
+                      walletData.totalBalance.length > 8
+                        ? "text-3xl"
+                        : "text-5xl"
+                    )}
+                  >
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-300">
+                      {currency}
+                      {walletData.totalBalance}
+                    </span>
+                  </h2>
+                  <div className="bg-gradient-to-r from-[#33C3F0] to-white/5 h-1 w-full mt-auto transition-all duration-500 group-hover:from-[#33C3F0]/80"></div>
+                </div>
+
+                {/* Wallet Address Card */}
+                <div className="crypto-card flex flex-col relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl group hover:shadow-2xl transition-all duration-500 hover:border-white/20">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-[#33C3F0]/10 pointer-events-none"></div>
+                  <div className="absolute -left-16 -top-16 w-32 h-32 bg-purple-500/20 rounded-full blur-[32px] group-hover:blur-[40px] transition-all duration-500"></div>
+                  <div className="flex items-start justify-between mb-4 relative z-10 p-6">
+                    <div>
+                      <p className="text-gray-400 mb-1">Wallet Address</p>
+                      <p className="text-xs text-gray-500">
+                        Your unique identifier for transactions
+                      </p>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/30 to-purple-500/10 flex items-center justify-center text-purple-400 backdrop-blur-md border border-white/10 shadow-lg shadow-purple-500/10 group-hover:shadow-purple-500/20 transition-all duration-500">
+                      <QrCode size={20} />
+                    </div>
+                  </div>
+                  <div className="crypto-address mx-6 mb-6 flex-grow relative z-10 bg-black/40 backdrop-blur-sm border border-gray-800/50 px-4 py-3 rounded-lg font-mono text-sm text-gray-300 truncate group-hover:text-white transition-colors duration-300">
+                    {walletData.walletAddress}
+                  </div>
+                  <div className="flex gap-3 relative z-10 p-6 pt-0">
+                    <Button
+                      onClick={showQRCode}
+                      variant="outline"
+                      className="flex-1 border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300 group"
+                    >
+                      <QrCode
+                        size={18}
+                        className="mr-2 text-[#33C3F0] group-hover:scale-110 transition-transform duration-300"
+                      />
+                      Show QR
+                    </Button>
+                    <Button
+                      onClick={() => copyAddress(walletData.walletAddress)}
+                      variant="outline"
+                      className="flex-1 border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300 group"
+                    >
+                      <Copy
+                        size={18}
+                        className="mr-2 text-[#33C3F0] group-hover:scale-110 transition-transform duration-300"
+                      />
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-500/60 to-white/5 h-1 w-full mt-auto transition-all duration-500 group-hover:from-purple-500/80"></div>
+                </div>
+              </div>
+
+              {/* Cryptocurrencies Section */}
+              <h2 className="text-2xl font-bold mb-6 mt-12 text-white/90 flex items-center">
+                <span className="relative">
+                  Cryptocurrencies
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
+                </span>
+                <span className="text-sm ml-4 text-gray-400 font-normal">
+                  {walletData.cryptos.length} assets
                 </span>
               </h2>
-
-              <div className="bg-gradient-to-r from-[#33C3F0] to-white/5 h-1 w-full mt-auto transition-all duration-500 group-hover:from-[#33C3F0]/80"></div>
-            </div>
-
-            <div className="crypto-card flex flex-col relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl group hover:shadow-2xl transition-all duration-500 hover:border-white/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-[#33C3F0]/10 pointer-events-none"></div>
-              <div className="absolute -left-16 -top-16 w-32 h-32 bg-purple-500/20 rounded-full blur-[32px] group-hover:blur-[40px] transition-all duration-500"></div>
-
-              <div className="flex items-start justify-between mb-4 relative z-10 p-6">
-                <div>
-                  <p className="text-gray-400 mb-1">Wallet Address</p>
-                  <p className="text-xs text-gray-500">
-                    Your unique identifier for transactions
-                  </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-500/30 to-purple-500/10 flex items-center justify-center text-purple-400 backdrop-blur-md border border-white/10 shadow-lg shadow-purple-500/10 group-hover:shadow-purple-500/20 transition-all duration-500">
-                  <QrCode size={20} />
-                </div>
-              </div>
-              <div className="crypto-address mx-6 mb-6 flex-grow relative z-10 bg-black/40 backdrop-blur-sm border border-gray-800/50 px-4 py-3 rounded-lg font-mono text-sm text-gray-300 truncate group-hover:text-white transition-colors duration-300">
-                {walletData.walletAddress}
-              </div>
-              <div className="flex gap-3 relative z-10 p-6 pt-0">
-                <Button
-                  onClick={showQRCode}
-                  variant="outline"
-                  className="flex-1 border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300 group"
-                >
-                  <QrCode
-                    size={18}
-                    className="mr-2 text-[#33C3F0] group-hover:scale-110 transition-transform duration-300"
-                  />
-                  Show QR
-                </Button>
-                <Button
-                  onClick={() => copyAddress(walletData.walletAddress)}
-                  variant="outline"
-                  className="flex-1 border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300 group"
-                >
-                  <Copy
-                    size={18}
-                    className="mr-2 text-[#33C3F0] group-hover:scale-110 transition-transform duration-300"
-                  />
-                  Copy
-                </Button>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-500/60 to-white/5 h-1 w-full mt-auto transition-all duration-500 group-hover:from-purple-500/80"></div>
-            </div>
-          </div>
-
-          <h2 className="text-2xl font-bold mb-6 mt-12 text-white/90 flex items-center">
-            <span className="relative">
-              Cryptocurrencies
-              <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
-            </span>
-            <span className="text-sm ml-4 text-gray-400 font-normal">
-              4 assets
-            </span>
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {walletData.cryptos.map((crypto, index) => (
-              <div
-                key={index}
-                className="transform transition-all duration-500 relative"
-                style={{
-                  transform:
-                    expandedCard === index ? "scale(1.03)" : "scale(1)",
-                  zIndex: expandedCard === index ? 20 : 10,
-                }}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div
-                  className={cn(
-                    "crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl transition-all duration-500",
-                    hoveredCard === index && "border-white/20 shadow-2xl"
-                  )}
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${crypto.color} pointer-events-none opacity-30`}
-                  ></div>
-                  <div
-                    className={`absolute -right-8 -top-8 w-24 h-24 bg-${crypto.accentColor}/30 rounded-full blur-[24px] transition-all duration-500`}
-                  ></div>
-
-                  <div className="flex items-center justify-between mb-4 relative z-10 p-5">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-12 w-12 rounded-full bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center backdrop-blur-md border border-${crypto.accentColor}/30`}
-                      >
-                        {crypto.icon}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">
-                          {crypto.name}
-                        </h3>
-                        <p className="text-sm text-gray-400">{crypto.symbol}</p>
-                      </div>
-                    </div>
-                    <div
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        crypto.positive
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                    >
-                      {crypto.change}
-                    </div>
-                  </div>
-
-                  <div className="mb-4 relative z-10 px-5">
-                    <p className="text-gray-400 text-sm mb-1">Balance</p>
-                    <div className="flex items-baseline">
-                      <span
-                        className={cn(
-                          "font-bold mr-2",
-                          crypto.amount.length > 6 ? "text-xl" : "text-2xl"
-                        )}
-                      >
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-300">
-                          {crypto.amount} {crypto.symbol}
-                        </span>
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        ≈ ₹{crypto.fiatValue}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    className={cn(
-                      "transition-all duration-500 overflow-hidden",
-                      expandedCard === index
-                        ? "max-h-[200px] opacity-100"
-                        : "max-h-0 opacity-0"
-                    )}
-                  >
-                    <div className="px-5 mb-4 relative z-10">
-                      <p className="text-gray-400 text-sm mb-1">Address</p>
-                      <div className="relative">
-                        <div className="crypto-address flex justify-between items-center bg-black/40 backdrop-blur-sm border border-gray-800/50 p-3 rounded-md">
-                          <span className="truncate pr-2 text-sm font-mono text-gray-300">
-                            {crypto.address}
-                          </span>
-                          <button
-                            onClick={() => copyAddress(crypto.address)}
-                            className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-full"
-                          >
-                            <Copy size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-4 mb-4 relative z-10 px-5">
-                    <Button
-                      className={`wallet-action-button bg-gradient-to-r from-${crypto.accentColor} to-${crypto.accentColor}/70 hover:opacity-90 transition-all duration-300 shadow-lg shadow-${crypto.accentColor}/20`}
-                    >
-                      Send
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="wallet-action-button border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300"
-                    >
-                      Receive
-                    </Button>
-                  </div>
-
-                  <button
-                    onClick={() => toggleCardExpand(index)}
-                    className="w-full flex items-center justify-center py-2 text-sm text-gray-400 hover:text-white transition-colors relative z-10 border-t border-white/5 hover:bg-white/5"
-                  >
-                    {expandedCard === index ? (
-                      <>
-                        <ChevronUp size={16} className="mr-1" /> Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={16} className="mr-1" /> More
-                      </>
-                    )}
-                  </button>
-
-                  <div
-                    className={`bg-gradient-to-r from-${crypto.accentColor}/60 to-white/5 h-1 w-full mt-auto transition-all duration-500`}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-16 mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-white/90 flex items-center">
-              <span className="relative">
-                Recent Activity
-                <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
-              </span>
-            </h2>
-
-            {walletData.recentTransactions.length > 0 ? (
-              <div className="space-y-4">
-                {walletData.recentTransactions.map((transaction, index) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {walletData.cryptos.map((crypto, index) => (
                   <div
                     key={index}
-                    className="crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl p-5 hover:border-white/20 transition-all duration-300 group"
+                    className="transform transition-all duration-500 relative"
+                    style={{
+                      transform:
+                        expandedCard === index ? "scale(1.03)" : "scale(1)",
+                      zIndex: expandedCard === index ? 20 : 10,
+                    }}
+                    onMouseEnter={() => setHoveredCard(index)}
+                    onMouseLeave={() => setHoveredCard(null)}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+                    <div
+                      className={cn(
+                        "crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl transition-all duration-500",
+                        hoveredCard === index && "border-white/20 shadow-2xl"
+                      )}
+                    >
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${crypto.color} pointer-events-none opacity-30`}
+                      ></div>
+                      <div
+                        className={`absolute -right-8 -top-8 w-24 h-24 bg-${crypto.accentColor}/30 rounded-full blur-[24px] transition-all duration-500`}
+                      ></div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-md border border-white/10">
-                          {transaction.icon}
-                        </div>
-                        <div>
-                          <div className="flex items-center">
-                            <span
-                              className={
-                                transaction.type === "send"
-                                  ? "text-red-400"
-                                  : "text-green-400"
-                              }
-                            >
-                              {transaction.type === "send"
-                                ? "Sent"
-                                : "Received"}
-                            </span>
-                            <span className="text-gray-400 mx-2">•</span>
-                            <span className="text-white">
-                              {transaction.amount} {transaction.crypto}
-                            </span>
+                      <div className="flex items-center justify-between mb-4 relative z-10 p-5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`h-12 w-12 rounded-full bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center backdrop-blur-md border border-${crypto.accentColor}/30`}
+                          >
+                            {crypto.icon}
                           </div>
-                          <p className="text-sm text-gray-400">
-                            {transaction.type === "send"
-                              ? `To: ${transaction.to}`
-                              : `From: ${transaction.from}`}
-                          </p>
+                          <div>
+                            <h3 className="font-medium text-white">
+                              {crypto.name}
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                              {crypto.symbol}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            crypto.positive
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {crypto.change}
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <div className="flex items-center justify-end mb-1">
-                          <span className="text-sm text-gray-300">
-                            {transaction.date}
+                      <div className="mb-4 relative z-10 px-5">
+                        <p className="text-gray-400 text-sm mb-1">Balance</p>
+                        <div className="flex items-baseline">
+                          <span
+                            className={cn(
+                              "font-bold mr-2",
+                              crypto.amount.length > 6 ? "text-xl" : "text-2xl"
+                            )}
+                          >
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-300">
+                              {crypto.amount} {crypto.symbol}
+                            </span>
                           </span>
-                          <CircleCheck
-                            size={14}
-                            className="ml-2 text-green-400"
-                          />
-                        </div>
-                        <div className="text-xs text-gray-500 uppercase">
-                          {transaction.status}
+                          <span className="text-gray-400 text-sm">
+                            ≈ ₹{crypto.fiatValue}
+                          </span>
                         </div>
                       </div>
+
+                      {/* Collapsible Section */}
+                      <div
+                        className={cn(
+                          "transition-all duration-500 overflow-hidden",
+                          expandedCard === index
+                            ? "max-h-[200px] opacity-100"
+                            : "max-h-0 opacity-0"
+                        )}
+                      >
+                        <div className="px-5 mb-4 relative z-10">
+                          <p className="text-gray-400 text-sm mb-1">Address</p>
+                          <div className="relative">
+                            <div className="crypto-address flex justify-between items-center bg-black/40 backdrop-blur-sm border border-gray-800/50 p-3 rounded-md">
+                              <span className="truncate pr-2 text-sm font-mono text-gray-300">
+                                {crypto.address}
+                              </span>
+                              <button
+                                onClick={() => copyAddress(crypto.address)}
+                                className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-full"
+                              >
+                                <Copy size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-4 mb-4 relative z-10 px-5">
+                        <Button
+                          className={`wallet-action-button bg-gradient-to-r from-${crypto.accentColor} to-${crypto.accentColor}/70 hover:opacity-90 transition-all duration-300 shadow-lg shadow-${crypto.accentColor}/20`}
+                        >
+                          Send
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="wallet-action-button border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300"
+                        >
+                          Receive
+                        </Button>
+                      </div>
+
+                      <button
+                        onClick={() => toggleCardExpand(index)}
+                        className="w-full flex items-center justify-center py-2 text-sm text-gray-400 hover:text-white transition-colors relative z-10 border-t border-white/5 hover:bg-white/5"
+                      >
+                        {expandedCard === index ? (
+                          <>
+                            <ChevronUp size={16} className="mr-1" /> Less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={16} className="mr-1" /> More
+                          </>
+                        )}
+                      </button>
+
+                      <div
+                        className={`bg-gradient-to-r from-${crypto.accentColor}/60 to-white/5 h-1 w-full mt-auto transition-all duration-500`}
+                      ></div>
                     </div>
                   </div>
                 ))}
+              </div>
 
-                <Link to="/transaction">
-                  <Button className="w-full mt-4 bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                    <span className="relative">View All Transactions</span>
-                  </Button>
+              {/* Recent Activity Section */}
+              <div className="mt-16 mb-12">
+                <h2 className="text-2xl font-bold mb-6 text-white/90 flex items-center">
+                  <span className="relative">
+                    Recent Activity
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
+                  </span>
+                </h2>
+
+                {walletData.recentTransactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {walletData.recentTransactions.map((transaction, index) => (
+                      <div
+                        key={index}
+                        className="crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl p-5 hover:border-white/20 transition-all duration-300 group"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-md border border-white/10">
+                              {transaction.icon}
+                            </div>
+                            <div>
+                              <div className="flex items-center">
+                                <span
+                                  className={
+                                    transaction.type === "send"
+                                      ? "text-red-400"
+                                      : "text-green-400"
+                                  }
+                                >
+                                  {transaction.type === "send"
+                                    ? "Sent"
+                                    : "Received"}
+                                </span>
+                                <span className="text-gray-400 mx-2">•</span>
+                                <span className="text-white">
+                                  {transaction.amount} {transaction.crypto}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-400">
+                                {transaction.type === "send"
+                                  ? `To: ${transaction.to}`
+                                  : `From: ${transaction.from}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="flex items-center justify-end mb-1">
+                              <span className="text-sm text-gray-300">
+                                {transaction.date}
+                              </span>
+                              <CircleCheck
+                                size={14}
+                                className="ml-2 text-green-400"
+                              />
+                            </div>
+                            <div className="text-xs text-gray-500 uppercase">
+                              {transaction.status}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <Link to="/transaction">
+                      <Button className="w-full mt-4 bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
+                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                        <span className="relative">View All Transactions</span>
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="crypto-card flex flex-col items-center justify-center py-16 relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl hover:border-white/20 transition-all duration-300 group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#33C3F0]/5 to-purple-500/5 pointer-events-none"></div>
+                    <p className="text-gray-400 mb-6 relative z-10">
+                      No recent activity
+                    </p>
+                    <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 px-8 py-6 h-auto relative z-10 group">
+                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                      <span className="relative">Make a Transaction</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Footer */}
+        <footer className="py-6 border-t border-white/10 backdrop-blur-xl bg-black/20 relative z-10">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-500">
+                © 2023 ZollPay. All rights reserved.
+              </div>
+              <div className="flex items-center gap-6">
+                <Link
+                  to="/"
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Terms
+                </Link>
+                <Link
+                  to="/"
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  to="/"
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Support
                 </Link>
               </div>
-            ) : (
-              <div className="crypto-card flex flex-col items-center justify-center py-16 relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl hover:border-white/20 transition-all duration-300 group">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#33C3F0]/5 to-purple-500/5 pointer-events-none"></div>
-                <p className="text-gray-400 mb-6 relative z-10">
-                  No recent activity
-                </p>
-                <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 px-8 py-6 h-auto relative z-10 group">
-                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                  <span className="relative">Make a Transaction</span>
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-
-      <footer className="py-6 border-t border-white/10 backdrop-blur-xl bg-black/20 relative z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-500">
-              © 2023 ZollPay. All rights reserved.
-            </div>
-            <div className="flex items-center gap-6">
-              <Link
-                to="/"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Terms
-              </Link>
-              <Link
-                to="/"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Privacy
-              </Link>
-              <Link
-                to="/"
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Support
-              </Link>
             </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 };
 

@@ -8,7 +8,8 @@ import { LoginContext } from "@/context/LoginContext";
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { email, password, setEmail, setPassword } = useContext(LoginContext);
+  const { email, password, setName, setEmail, setPassword, setWalletAddress } =
+    useContext(LoginContext);
   const [showPassword, setShowPassword] = useState(false);
   const url = "http://localhost:8081";
 
@@ -29,6 +30,11 @@ const SignIn = () => {
         toast.error(data.message);
         return;
       }
+
+      console.log(data.user);
+      console.log(data.user.account);
+      setName(data.user.name);
+      setWalletAddress(data.user.account.setWalletAddress);
 
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
