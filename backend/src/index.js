@@ -36,6 +36,21 @@ app.get("/login", async (req, res) => {
     }
 
     console.log(user);
+    // const user = {
+    //   id: "user_123abc", // auto-generated usually
+    //   name: "John Doe",
+    //   email: "john@example.com",
+    //   password: "hashedpassword123",
+    //   account: [
+    //     {
+    //       id: "acc_001",
+    //       accountNumber: "1234567890",
+    //       bankName: "Demo Bank",
+    //       userId: "user_123abc",
+    //     },
+    //   ],
+    // };
+
     res.status(200).json({
       message: "Logged in Successfully",
       user,
