@@ -11,6 +11,7 @@ import Wallet from "./pages/Wallet";
 import ScanPay from "./pages/ScanPay";
 import Transaction from "./pages/Transaction";
 import NotFound from "./pages/NotFound";
+import { LoginProvider } from "@/context/LoginContext";
 
 const queryClient = new QueryClient();
 
@@ -19,19 +20,21 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/scanpay" element={<ScanPay />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/transaction" element={<Transaction />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <LoginProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/scanpay" element={<ScanPay />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/transaction" element={<Transaction />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </LoginProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

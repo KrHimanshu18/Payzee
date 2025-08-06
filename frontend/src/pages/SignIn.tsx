@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { LoginContext } from "@/context/LoginContext";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { email, password, setEmail, setPassword } = useContext(LoginContext);
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const url = "http://localhost:8081";
 
   const handleSignIn = async (e: React.FormEvent) => {

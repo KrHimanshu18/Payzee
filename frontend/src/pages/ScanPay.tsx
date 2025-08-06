@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { LoginContext } from "@/context/LoginContext";
 
 declare global {
   interface Window {
@@ -48,7 +49,8 @@ declare global {
 function ScanPay() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [name, setName] = useState("");
+  const { username, email, password, setUsername, setEmail, setPassword } =
+    useContext(LoginContext);
   const [walletAddress, setWalletAddress] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
@@ -87,10 +89,6 @@ function ScanPay() {
     // if (!user || !user.name) {
     //   navigate("/");
     // }
-    if (location.state) {
-      setName(location.state.name);
-      setWalletAddress(location.state.walletAddress);
-    }
 
     const startCamera = async () => {
       try {
@@ -117,7 +115,7 @@ function ScanPay() {
           .forEach((track) => track.stop());
       }
     };
-  }, [user, navigate, cameraActive, location.state]);
+  }, [user, navigate, cameraActive]);
 
   const toggleCamera = async () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -303,7 +301,7 @@ function ScanPay() {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>{name}</span>
+              <span>{username}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button

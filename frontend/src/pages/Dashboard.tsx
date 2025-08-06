@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +16,17 @@ import {
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "react-router-dom";
+import { LoginContext } from "@/context/LoginContext";
 
 const Dashboard = () => {
   const handleLogout = () => {
     toast.success("Logged out successfully");
   };
+  const { username } = useContext(LoginContext);
   const location = useLocation();
-  const [name, setName] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   useEffect(() => {
     if (location.state) {
-      setName(location.state.user.name);
       setWalletAddress(location.state.user.walletAddress);
     }
   }, [location.state]);
@@ -123,7 +123,7 @@ const Dashboard = () => {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>{name}</span>
+              <span>{username}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button
