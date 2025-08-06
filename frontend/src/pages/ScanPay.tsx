@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Scan,
@@ -47,6 +47,9 @@ declare global {
 
 function ScanPay() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [name, setName] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [amount, setAmount] = useState("");
@@ -84,6 +87,10 @@ function ScanPay() {
     // if (!user || !user.name) {
     //   navigate("/");
     // }
+    if (location.state) {
+      setName(location.state.name);
+      setWalletAddress(location.state.walletAddress);
+    }
 
     const startCamera = async () => {
       try {
@@ -110,7 +117,7 @@ function ScanPay() {
           .forEach((track) => track.stop());
       }
     };
-  }, [user, navigate, cameraActive]);
+  }, [user, navigate, cameraActive, location.state]);
 
   const toggleCamera = async () => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -164,7 +171,8 @@ function ScanPay() {
         });
         const sender = accounts[0];
         const transactionParameters = {
-          to: "0x9fF40834755C55896da370aC057A7E3E1f24Bf07", // Replace with recipient's wallet address
+          // to: "0x9fF40834755C55896da370aC057A7E3E1f24Bf07", // Replace with recipient's wallet address
+          to: { walletAddress },
           from: sender,
           value: (parseFloat(amount) * 1e18).toString(16), // Convert amount to Wei
         };
@@ -295,7 +303,7 @@ function ScanPay() {
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
                 J
               </div>
-              <span>John Doe</span>
+              <span>{name}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button

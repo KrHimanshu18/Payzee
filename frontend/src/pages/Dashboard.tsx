@@ -22,12 +22,12 @@ const Dashboard = () => {
     toast.success("Logged out successfully");
   };
   const location = useLocation();
-  const [name, setName] = useState("not set");
+  const [name, setName] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   useEffect(() => {
     if (location.state) {
-      setName(location.state.name);
-      setWalletAddress(location.state.walletAddress);
+      setName(location.state.user.name);
+      setWalletAddress(location.state.user.walletAddress);
     }
   }, [location.state]);
 
