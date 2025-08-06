@@ -21,6 +21,7 @@ app.get("/login", async (req, res) => {
   try {
     const user = await prisma.user.findFirst({
       where: { email },
+      include: { account: true },
     });
 
     if (!user) {

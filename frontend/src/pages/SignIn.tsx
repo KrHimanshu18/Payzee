@@ -31,10 +31,13 @@ const SignIn = () => {
         return;
       }
 
-      console.log(data.user);
-      console.log(data.user.account);
       setName(data.user.name);
-      setWalletAddress(data.user.account.setWalletAddress);
+      if (data.user.account.walletAddress) {
+        console.log(data.user.account.walletAddress);
+        setWalletAddress(data.user.account.walletAddress);
+      } else {
+        console.log("No wallet address found");
+      }
 
       toast.success("Login successful! Redirecting...");
       setTimeout(() => {
