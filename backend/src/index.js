@@ -115,14 +115,18 @@ app.post("/setWalletAddress", async (req, res) => {
     }
 
     // Update the wallet address in AccountDetails
-    const updatedAccount = await prisma.accountDetails.update({
-      where: { email: user.email },
-      data: { walletAddress: body.walletAddress },
+    const newAccount = await prisma.accountDetails.create({
+      data: {
+        walletAddress: body.walletAddress,
+        user: {
+          connect: { id: user.id },
+        },
+      },
     });
 
     res.status(200).json({
-      message: "Wallet address updated successfully",
-      account: updatedAccount,
+      message: "Wallet address added successfully",
+      account: newAccount,
     });
   } catch (error) {
     console.error(error);
