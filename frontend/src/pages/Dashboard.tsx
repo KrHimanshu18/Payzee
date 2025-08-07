@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -19,6 +19,7 @@ import { useLocation } from "react-router-dom";
 import { LoginContext } from "@/context/LoginContext";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const handleLogout = () => {
     toast.success("Logged out successfully");
   };
@@ -26,10 +27,14 @@ const Dashboard = () => {
   const location = useLocation();
   const [walletAddress, setWalletAddress] = useState("");
   useEffect(() => {
+    if (!name) {
+      navigate("/");
+    }
+
     if (location.state) {
       setWalletAddress(location.state.user.walletAddress);
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-crypto-darker to-black text-white overflow-x-hidden">

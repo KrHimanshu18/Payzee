@@ -64,7 +64,6 @@ function ScanPay() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const availableCryptos = [
     {
       name: "Bitcoin",
@@ -85,10 +84,9 @@ function ScanPay() {
   const upiId = "example@upi";
 
   useEffect(() => {
-    // update this when authentication added
-    // if (!user || !user.name) {
-    //   navigate("/");
-    // }
+    if (!name) {
+      navigate("/");
+    }
 
     const startCamera = async () => {
       try {
@@ -115,7 +113,7 @@ function ScanPay() {
           .forEach((track) => track.stop());
       }
     };
-  }, [user, navigate, cameraActive]);
+  }, [navigate, cameraActive]);
 
   const toggleCamera = async () => {
     if (videoRef.current && videoRef.current.srcObject) {

@@ -16,7 +16,7 @@ import {
   CircleCheck,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -79,6 +79,7 @@ const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
 // --- Main Wallet Page Component ---
 
 const WalletPage = () => {
+  const navigate = useNavigate();
   const { name, email, walletAddress, setWalletAddress } =
     useContext(LoginContext);
 
@@ -226,13 +227,16 @@ const WalletPage = () => {
   };
 
   useEffect(() => {
+    if (!name) {
+      navigate("/");
+    }
     if (walletAddress) {
       fetchWalletDetails(walletAddress);
     } else {
       setIsLoading(false);
       setAddressModalOpen(true);
     }
-  }, [walletAddress]);
+  }, [walletAddress, navigate]);
 
   const handleLogout = () => {
     toast.success("Logged out successfully");

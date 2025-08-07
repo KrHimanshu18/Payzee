@@ -147,10 +147,9 @@ function Transaction() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    // if (!user || !JSON.parse(user).isAuthenticated) {
-    //   navigate("/signin");
-    // }
+    if (!name) {
+      navigate("/");
+    }
   }, [navigate]);
 
   // Get counts for the summary
