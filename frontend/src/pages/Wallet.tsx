@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useContext, useState, useEffect } from "react";
 import { LoginContext } from "@/context/LoginContext";
+import { isAddress, getAddress, formatEther, BrowserProvider } from "ethers";
 
 // --- Helper Components ---
 
@@ -195,17 +196,32 @@ const WalletPage = () => {
     }
   };
 
-  /**
-   * Fetches wallet details from a blockchain service.
-   * @param {string} address - The wallet address to fetch data for.
-   */
   const fetchWalletDetails = async (address) => {
     setIsLoading(true);
     toast.info("Fetching wallet details...", { id: "fetch-wallet" });
-    // Simulate a network request and use mock data.
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setWalletData({ ...mockWalletDetails, walletAddress: address });
-    toast.success("Wallet details loaded!", { id: "fetch-wallet" });
+
+    try {
+      // if (!isAddress(address)) throw new Error("Invalid address");
+
+      // const checksummedAddress = getAddress(address);
+
+      // const provider = new BrowserProvider(window.ethereum);
+      // const balance = await provider.getBalance(checksummedAddress);
+      // console.log(formatEther(balance));
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setWalletData({
+        ...mockWalletDetails,
+        // walletAddress: checksummedAddress,
+        walletAddress: address,
+      });
+
+      toast.success("Wallet details loaded!", { id: "fetch-wallet" });
+    } catch (err) {
+      toast.error("Invalid wallet address");
+      console.error(err);
+    }
+
     setIsLoading(false);
   };
 
@@ -402,7 +418,7 @@ const WalletPage = () => {
                   <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
                     <Plus size={18} className="mr-2 relative" />
-                    <span className="relative">Add Wallet</span>
+                    <span className="relative">Update/Change Wallet</span>
                   </Button>
                 </div>
               </div>
