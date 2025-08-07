@@ -167,9 +167,11 @@ const WalletPage = () => {
     toast.info("Saving your wallet address...", { id: "set-address" });
     try {
       console.log(address);
-      const res = await fetch(
-        `${url}/setWalletAddress?name=${name}&email=${email}&walletAddress=${address}`
-      );
+      const res = await fetch(`${url}/setWalletAddress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, walletAddress: address }),
+      });
       const data = await res.json();
 
       if (!res.ok) {

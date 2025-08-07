@@ -102,12 +102,12 @@ app.post("/signup", async (req, res) => {
 });
 
 app.post("/setWalletAddress", async (req, res) => {
-  const { email, walletAddress } = req.body;
+  const body = req.body;
 
   try {
     // Find the user by email
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: body.email },
     });
 
     if (!user) {
@@ -117,7 +117,7 @@ app.post("/setWalletAddress", async (req, res) => {
     // Update the wallet address in AccountDetails
     const updatedAccount = await prisma.accountDetails.update({
       where: { email: user.email },
-      data: { walletAddress },
+      data: { walletAddress: body.walletAddress },
     });
 
     res.status(200).json({
