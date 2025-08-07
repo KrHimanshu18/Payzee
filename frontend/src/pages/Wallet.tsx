@@ -166,6 +166,7 @@ const WalletPage = () => {
   const updateWalletAddressOnBackend = async (name, address) => {
     toast.info("Saving your wallet address...", { id: "set-address" });
     try {
+      console.log(address);
       const res = await fetch(
         `${url}/setWalletAddress?name=${name}&email=${email}&walletAddress=${address}`
       );
