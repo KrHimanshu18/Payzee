@@ -137,6 +137,12 @@ app.post("/setWalletAddress", async (req, res) => {
   }
 });
 
+app.use((err, req, res, next) => {
+  res.json({
+    msg: "Sorry something is up with our server",
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
