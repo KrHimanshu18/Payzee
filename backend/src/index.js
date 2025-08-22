@@ -4,10 +4,13 @@ import pkg from "@prisma/client";
 import bcrypt from "bcrypt";
 import cors from "cors";
 import { ethers } from "ethers";
+import dotenv from "dotenv";
+import axios from "axios";
 
 const { PrismaClient } = pkg;
 const app = express();
 const port = 8081;
+dotenv.config();
 app.use(bodyParser.json());
 app.use(cors());
 const prisma = new PrismaClient();
@@ -128,6 +131,77 @@ app.post("/getDetails", async (req, res) => {
       balance: ethers.formatEther(balance), // already string
       network: network.name,
       chainId: network.chainId.toString(), // convert BigInt → string
+    });
+  } catch (error) {
+    console.error("Error fetching details:", error);
+    res.status(500).json({ error: "Error fetching details" });
+  }
+});
+
+app.post("/getWallet", async (req, res) => {
+  try {
+    const { address } = req.body;
+    if (!address)
+      return res.status(400).json({ error: "Wallet address required" });
+
+    let normalizedAddress;
+    try {
+      normalizedAddress = ethers.getAddress(address); // checksum
+    } catch {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
+
+    // 1️⃣ ETH balance
+    const balance = await provider.getBalance(normalizedAddress);
+
+    // 2️⃣ Network info
+    const network = await provider.getNetwork();
+
+    // 3️⃣ Nonce (tx count)
+    const txCount = await provider.getTransactionCount(normalizedAddress);
+
+    // 4️⃣ Is contract?
+    const code = await provider.getCode(normalizedAddress);
+    const isContract = code !== "0x";
+
+    // 5️⃣ ENS name
+    const ens = await provider.lookupAddress(normalizedAddress);
+
+    // 6️⃣ Token balances & tx history via Etherscan
+    const etherscanBase = `https://api.etherscan.io/api`;
+    const key = process.env.ETHERSCAN_API_KEY;
+
+    // Token balances (ERC-20)
+    const tokenResp = await axios.get(
+      `${etherscanBase}?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address=${normalizedAddress}&tag=latest&apikey=${key}`
+    ); // Example: USDT
+    const usdtBalance = tokenResp.data?.result;
+
+    // Last 10 txs
+    const txResp = await axios.get(
+      `${etherscanBase}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${key}`
+    );
+    const transactions = txResp.data?.result || [];
+
+    res.json({
+      walletAddress: normalizedAddress,
+      network: network.name,
+      chainId: network.chainId.toString(),
+      balanceETH: ethers.formatEther(balance),
+      txCount,
+      isContract,
+      ensName: ens || null,
+      tokens: {
+        USDT: usdtBalance ? ethers.formatUnits(usdtBalance, 6) : "0", // USDT has 6 decimals
+      },
+      lastTransactions: transactions.map((tx) => ({
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        valueETH: ethers.formatEther(tx.value),
+        timeStamp: tx.timeStamp,
+        gasUsed: tx.gasUsed,
+      })),
     });
   } catch (error) {
     console.error("Error fetching details:", error);
