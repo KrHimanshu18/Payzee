@@ -157,6 +157,10 @@ async function getChainBalances(address) {
         `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`
       );
       const response = await query.json();
+
+      // Log the full response
+      console.log(`Full balance response for chain ${chain}:`, response);
+
       balances[chain] = response?.result
         ? ethers.formatEther(response.result)
         : "0";
@@ -166,7 +170,6 @@ async function getChainBalances(address) {
     }
   }
 
-  console.log(balances);
   return balances;
 }
 
@@ -179,6 +182,9 @@ async function getTokens(address, chainId) {
     const resp = await axios.get(
       `${baseUrl}?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${key}`
     );
+
+    // Log the full token transaction response
+    console.log(`Full token tx response for chain ${chainId}:`, resp.data);
 
     if (Array.isArray(resp.data?.result)) {
       for (const tx of resp.data.result) {
@@ -219,6 +225,9 @@ export async function getLastTransactions(address) {
       const resp = await axios.get(
         `${baseUrl}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
       );
+
+      // Log the full transaction response
+      console.log(`Full tx response for chain ${chainId}:`, resp.data);
 
       allTxs[chainId] = Array.isArray(resp.data?.result)
         ? resp.data.result.map((tx) => ({
