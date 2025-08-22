@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cors());
 const prisma = new PrismaClient();
 const provider = new ethers.JsonRpcProvider(
-  "https://optimism-mainnet.infura.io/v3/0068e2115b70409fa25b4c1684b4657e"
+  "https://base-mainnet.infura.io/v3/0068e2115b70409fa25b4c1684b4657e"
 );
 
 app.get("/login", async (req, res) => {
@@ -167,21 +167,59 @@ app.post("/getWallet", async (req, res) => {
     // 5️⃣ ENS name
     const ens = await provider.lookupAddress(normalizedAddress);
 
-    // 6️⃣ Token balances & tx history via Etherscan
-    const etherscanBase = `https://api.etherscan.io/api`;
-    const key = process.env.ETHERSCAN_API_KEY;
+    // Fetch token transfers from Basescan
+    const basescanBase = `https://api.basescan.org/api`;
+    const key = process.env.BASESCAN_API_KEY;
 
-    // Token balances (ERC-20)
-    const tokenResp = await axios.get(
-      `${etherscanBase}?module=account&action=tokenbalance&contractaddress=0xdAC17F958D2ee523a2206206994597C13D831ec7&address=${normalizedAddress}&tag=latest&apikey=${key}`
-    ); // Example: USDT
-    const usdtBalance = tokenResp.data?.result;
-
-    // Last 10 txs
-    const txResp = await axios.get(
-      `${etherscanBase}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${key}`
+    const tokenTxResp = await axios.get(
+      `${basescanBase}?module=account&action=tokentx&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=desc&apikey=${key}`
     );
-    const transactions = txResp.data?.result || [];
+
+    let tokens = {};
+
+    if (tokenTxResp.data?.result && Array.isArray(tokenTxResp.data.result)) {
+      for (const tx of tokenTxResp.data.result) {
+        if (!tx || !tx.tokenSymbol || !tx.tokenDecimal) continue; // skip invalid rows
+
+        const symbol = tx.tokenSymbol;
+        const decimals = parseInt(tx.tokenDecimal);
+
+        if (!tokens[symbol]) {
+          tokens[symbol] = ethers.BigNumber.from(0);
+        }
+
+        // Wallet received tokens
+        if (tx.to && tx.to.toLowerCase() === normalizedAddress.toLowerCase()) {
+          tokens[symbol] = tokens[symbol].add(ethers.BigNumber.from(tx.value));
+        }
+
+        // Wallet sent tokens
+        if (
+          tx.from &&
+          tx.from.toLowerCase() === normalizedAddress.toLowerCase()
+        ) {
+          tokens[symbol] = tokens[symbol].sub(ethers.BigNumber.from(tx.value));
+        }
+      }
+
+      // Format balances nicely
+      for (const symbol in tokens) {
+        const decimals = parseInt(
+          tokenTxResp.data.result.find((t) => t.tokenSymbol === symbol)
+            ?.tokenDecimal || "18"
+        );
+        tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
+      }
+    }
+
+    // 7️⃣ Last 10 native transactions
+    const txResp = await axios.get(
+      `${basescanBase}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${key}`
+    );
+
+    const transactions = Array.isArray(txResp.data?.result)
+      ? txResp.data.result
+      : [];
 
     res.json({
       walletAddress: normalizedAddress,
@@ -191,9 +229,7 @@ app.post("/getWallet", async (req, res) => {
       txCount,
       isContract,
       ensName: ens || null,
-      tokens: {
-        USDT: usdtBalance ? ethers.formatUnits(usdtBalance, 6) : "0", // USDT has 6 decimals
-      },
+      tokens,
       lastTransactions: transactions.map((tx) => ({
         hash: tx.hash,
         from: tx.from,
