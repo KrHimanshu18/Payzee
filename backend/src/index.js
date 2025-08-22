@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import pkg from "@prisma/client";
 import bcrypt from "bcrypt";
 import cors from "cors";
+import { ethers } from "ethers";
 
 const { PrismaClient } = pkg;
 const app = express();
@@ -10,6 +11,9 @@ const port = 8081;
 app.use(bodyParser.json());
 app.use(cors());
 const prisma = new PrismaClient();
+const provider = new ethers.JsonRpcProvider(
+  "https://optimism-mainnet.infura.io/v3/0068e2115b70409fa25b4c1684b4657e"
+);
 
 app.get("/login", async (req, res) => {
   const { email, password } = req.query;
@@ -101,39 +105,33 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/setWalletAddress", async (req, res) => {
-  const body = req.body;
-
+app.post("/getDetails", async (req, res) => {
   try {
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: body.email },
-    });
+    const { address } = req.body;
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (!address) {
+      return res.status(400).json({ error: "Wallet address required" });
     }
 
-    // Update the wallet address in AccountDetails
-    const newAccount = await prisma.accountDetails.create({
-      data: {
-        walletAddress: body.walletAddress,
-        user: {
-          connect: { id: user.id },
-        },
-      },
-    });
+    let normalizedAddress;
+    try {
+      normalizedAddress = ethers.getAddress(address); // checksum validation
+    } catch (err) {
+      return res.status(400).json({ error: "Invalid wallet address" });
+    }
 
-    res.status(200).json({
-      message: "Wallet address added successfully",
-      account: newAccount,
+    const balance = await provider.getBalance(normalizedAddress);
+    const network = await provider.getNetwork();
+
+    res.json({
+      walletAddress: normalizedAddress,
+      balance: ethers.formatEther(balance), // already string
+      network: network.name,
+      chainId: network.chainId.toString(), // convert BigInt → string
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Failed to update wallet address",
-      error: error.message,
-    });
+    console.error("Error fetching details:", error);
+    res.status(500).json({ error: "Error fetching details" });
   }
 });
 

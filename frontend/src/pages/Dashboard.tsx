@@ -346,7 +346,7 @@ const Dashboard = () => {
             <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-3xl p-8 mb-12">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-2xl font-bold">Popular Cryptocurrencies</h3>
-                <div className="flex backdrop-blur-md bg-white/5 rounded-full p-1">
+                <div className="flex backdrop-blur-md bg-white/5 rounded-full p-1 gap-2">
                   <Button
                     size="sm"
                     className="bg-crypto-blue text-white rounded-full"
