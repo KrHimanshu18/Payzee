@@ -138,6 +138,108 @@ app.post("/getDetails", async (req, res) => {
   }
 });
 
+const explorers = {
+  1: "https://api.etherscan.io/api", // Ethereum
+  8453: "https://api.basescan.org/api", // Base
+  42161: "https://api.arbiscan.io/api", // Arbitrum
+  10: "https://api-optimistic.etherscan.io/api", // Optimism
+  137: "https://api.polygonscan.com/api", // Polygon
+};
+
+async function getChainBalances(address) {
+  const chains = [42161, 8453, 10, 534352, 81457]; // arbitrum, base, optimism, scroll, blast
+  const apiKey = process.env.MULTICHAIN_API_KEY;
+  let balances = {};
+
+  for (const chain of chains) {
+    try {
+      const query = await fetch(
+        `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`
+      );
+      const response = await query.json();
+      balances[chain] = response?.result
+        ? ethers.formatEther(response.result)
+        : "0";
+    } catch (err) {
+      console.error(`Error fetching balance for chain ${chain}:`, err);
+      balances[chain] = "error";
+    }
+  }
+
+  console.log(balances);
+  return balances;
+}
+
+async function getTokens(address, chainId) {
+  const baseUrl = explorers[chainId];
+  const key = process.env.MULTICHAIN_API_KEY;
+  let tokens = {};
+
+  try {
+    const resp = await axios.get(
+      `${baseUrl}?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${key}`
+    );
+
+    if (Array.isArray(resp.data?.result)) {
+      for (const tx of resp.data.result) {
+        if (!tx?.tokenSymbol || !tx?.tokenDecimal) continue;
+        const symbol = tx.tokenSymbol;
+
+        if (!tokens[symbol]) tokens[symbol] = ethers.BigNumber.from(0);
+
+        if (tx.to?.toLowerCase() === address.toLowerCase()) {
+          tokens[symbol] = tokens[symbol].add(ethers.BigNumber.from(tx.value));
+        }
+        if (tx.from?.toLowerCase() === address.toLowerCase()) {
+          tokens[symbol] = tokens[symbol].sub(ethers.BigNumber.from(tx.value));
+        }
+      }
+
+      for (const symbol in tokens) {
+        const decimals = parseInt(
+          resp.data.result.find((t) => t.tokenSymbol === symbol)
+            ?.tokenDecimal || "18"
+        );
+        tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
+      }
+    }
+  } catch (err) {
+    console.error(`Error fetching tokens for chain ${chainId}:`, err?.message);
+  }
+
+  return tokens;
+}
+
+export async function getLastTransactions(address) {
+  let allTxs = {};
+  const apiKey = process.env.MULTICHAIN_API_KEY;
+
+  for (const [chainId, baseUrl] of Object.entries(explorers)) {
+    try {
+      const resp = await axios.get(
+        `${baseUrl}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
+      );
+
+      allTxs[chainId] = Array.isArray(resp.data?.result)
+        ? resp.data.result.map((tx) => ({
+            hash: tx.hash,
+            from: tx.from,
+            to: tx.to,
+            valueETH: ethers.formatEther(tx.value),
+            timeStamp: tx.timeStamp,
+            gasUsed: tx.gasUsed,
+          }))
+        : [];
+    } catch (err) {
+      console.error(`Error fetching tx for chain ${chainId}:`, err.message);
+      allTxs[chainId] = [];
+    }
+  }
+
+  return allTxs;
+}
+
+// 🔹 Main API
 app.post("/getWallet", async (req, res) => {
   try {
     const { address } = req.body;
@@ -151,96 +253,32 @@ app.post("/getWallet", async (req, res) => {
       return res.status(400).json({ error: "Invalid wallet address" });
     }
 
-    // 1️⃣ ETH balance
-    const balance = await provider.getBalance(normalizedAddress);
+    // Fetch everything via reusable functions
+    const [balances, tokens, lastTransactions] = await Promise.all([
+      getChainBalances(normalizedAddress),
+      getTokens(normalizedAddress),
+      getLastTransactions(normalizedAddress),
+    ]);
 
-    // 2️⃣ Network info
     const network = await provider.getNetwork();
-
-    // 3️⃣ Nonce (tx count)
     const txCount = await provider.getTransactionCount(normalizedAddress);
-
-    // 4️⃣ Is contract?
     const code = await provider.getCode(normalizedAddress);
     const isContract = code !== "0x";
-
-    // 5️⃣ ENS name
     const ens = await provider.lookupAddress(normalizedAddress);
-
-    // Fetch token transfers from Basescan
-    const basescanBase = `https://api.basescan.org/api`;
-    const key = process.env.BASESCAN_API_KEY;
-
-    const tokenTxResp = await axios.get(
-      `${basescanBase}?module=account&action=tokentx&address=${normalizedAddress}&startblock=0&endblock=99999999&sort=desc&apikey=${key}`
-    );
-
-    let tokens = {};
-
-    if (tokenTxResp.data?.result && Array.isArray(tokenTxResp.data.result)) {
-      for (const tx of tokenTxResp.data.result) {
-        if (!tx || !tx.tokenSymbol || !tx.tokenDecimal) continue; // skip invalid rows
-
-        const symbol = tx.tokenSymbol;
-        const decimals = parseInt(tx.tokenDecimal);
-
-        if (!tokens[symbol]) {
-          tokens[symbol] = ethers.BigNumber.from(0);
-        }
-
-        // Wallet received tokens
-        if (tx.to && tx.to.toLowerCase() === normalizedAddress.toLowerCase()) {
-          tokens[symbol] = tokens[symbol].add(ethers.BigNumber.from(tx.value));
-        }
-
-        // Wallet sent tokens
-        if (
-          tx.from &&
-          tx.from.toLowerCase() === normalizedAddress.toLowerCase()
-        ) {
-          tokens[symbol] = tokens[symbol].sub(ethers.BigNumber.from(tx.value));
-        }
-      }
-
-      // Format balances nicely
-      for (const symbol in tokens) {
-        const decimals = parseInt(
-          tokenTxResp.data.result.find((t) => t.tokenSymbol === symbol)
-            ?.tokenDecimal || "18"
-        );
-        tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
-      }
-    }
-
-    // 7️⃣ Last 10 native transactions
-    const txResp = await axios.get(
-      `${basescanBase}?module=account&action=txlist&address=${normalizedAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${key}`
-    );
-
-    const transactions = Array.isArray(txResp.data?.result)
-      ? txResp.data.result
-      : [];
 
     res.json({
       walletAddress: normalizedAddress,
       network: network.name,
       chainId: network.chainId.toString(),
-      balanceETH: ethers.formatEther(balance),
+      balances,
       txCount,
       isContract,
       ensName: ens || null,
       tokens,
-      lastTransactions: transactions.map((tx) => ({
-        hash: tx.hash,
-        from: tx.from,
-        to: tx.to,
-        valueETH: ethers.formatEther(tx.value),
-        timeStamp: tx.timeStamp,
-        gasUsed: tx.gasUsed,
-      })),
+      lastTransactions,
     });
   } catch (error) {
-    console.error("Error fetching details:", error);
+    console.error("Error fetching details:", error?.response?.data || error);
     res.status(500).json({ error: "Error fetching details" });
   }
 });
