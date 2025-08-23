@@ -135,21 +135,15 @@ async function getChainBalances(address) {
 }
 
 export async function getTokens(address) {
-  const chains = [1, 42161, 8453, 10, 137]; // Ethereum + other chains
+  const chains = [1, 42161, 8453, 10, 137]; // Ethereum, Arbitrum, Base, Optimism, Polygon
   const apiKey = process.env.MULTICHAIN_API_KEY;
   let allTokens = {};
 
-  for (const chainId of chains) {
-    const baseUrl = explorers[chainId];
-    if (!baseUrl) {
-      console.warn(`No explorer URL for chain ${chainId}, skipping.`);
-      continue;
-    }
-
+  for (const chain of chains) {
     try {
-      console.log(`\n=== Fetching token transactions for chain ${chainId} ===`);
+      console.log(`\n=== Fetching token transactions for chain ${chain} ===`);
 
-      const url = `${baseUrl}/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+      const url = `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
       console.log("URL:", url);
 
       const resp = await axios.get(url);
@@ -157,7 +151,7 @@ export async function getTokens(address) {
       console.log("Full token tx response:", JSON.stringify(data, null, 2));
 
       if (!Array.isArray(data?.result)) {
-        allTokens[chainId] = {};
+        allTokens[chain] = {};
         continue;
       }
 
@@ -166,16 +160,19 @@ export async function getTokens(address) {
       for (const tx of data.result) {
         if (!tx?.tokenSymbol || !tx?.tokenDecimal) continue;
         const symbol = tx.tokenSymbol;
+        const value = ethers.BigNumber.from(tx.value);
 
         if (!tokens[symbol]) tokens[symbol] = ethers.BigNumber.from(0);
 
-        if (tx.to?.toLowerCase() === address.toLowerCase())
-          tokens[symbol] = tokens[symbol].add(ethers.BigNumber.from(tx.value));
-        if (tx.from?.toLowerCase() === address.toLowerCase())
-          tokens[symbol] = tokens[symbol].sub(ethers.BigNumber.from(tx.value));
+        if (tx.to?.toLowerCase() === address.toLowerCase()) {
+          tokens[symbol] = tokens[symbol].add(value);
+        }
+        if (tx.from?.toLowerCase() === address.toLowerCase()) {
+          tokens[symbol] = tokens[symbol].sub(value);
+        }
       }
 
-      // Convert to human-readable format
+      // Convert BigNumbers to human-readable format
       for (const symbol in tokens) {
         const decimals = parseInt(
           data.result.find((t) => t.tokenSymbol === symbol)?.tokenDecimal ||
@@ -184,12 +181,13 @@ export async function getTokens(address) {
         tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
       }
 
-      allTokens[chainId] = tokens;
+      allTokens[chain] = tokens;
     } catch (err) {
-      console.error(`Error fetching tokens for chain ${chainId}:`, err.message);
-      allTokens[chainId] = {};
+      console.error(`Error fetching tokens for chain ${chain}:`, err.message);
+      allTokens[chain] = {};
     }
 
+    // Small delay to avoid rate limits
     await new Promise((res) => setTimeout(res, 500));
   }
 
@@ -244,6 +242,52 @@ export async function getNormalTransactions(
   return allTxs;
 }
 
+// const tokens = [
+//   { symbol: "ETH", address: null, decimals: 18 },
+//   { symbol: "MATIC", address: null, decimals: 18 },
+//   { symbol: "BNB", address: null, decimals: 18 },
+//   { symbol: "AVAX", address: null, decimals: 18 },
+//   { symbol: "SOL", address: null, decimals: 9 },
+//   { symbol: "FTM", address: null, decimals: 18 },
+//   {
+//     symbol: "USDT",
+//     address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+//     decimals: 6,
+//   },
+//   {
+//     symbol: "USDC",
+//     address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+//     decimals: 6,
+//   },
+//   // add more ERC-20 tokens if needed
+// ];
+
+// async function getWalletBalances(walletAddress) {
+//   const balances = {};
+
+//   for (const token of tokens) {
+//     try {
+//       if (!token.address) {
+//         const balance = await provider.getBalance(walletAddress);
+//         balances[token.symbol] = ethers.formatUnits(balance, token.decimals);
+//       } else {
+//         const contract = new ethers.Contract(
+//           token.address,
+//           ["function balanceOf(address owner) view returns (uint256)"],
+//           provider
+//         );
+//         const balance = await contract.balanceOf(walletAddress);
+//         balances[token.symbol] = ethers.formatUnits(balance, token.decimals);
+//       }
+//     } catch (err) {
+//       console.error(`Error fetching balance for ${token.symbol}:`, err.message);
+//       balances[token.symbol] = "error";
+//     }
+//   }
+
+//   return balances;
+// }
+
 app.post("/getWallet", async (req, res) => {
   try {
     const { address } = req.body;
@@ -252,13 +296,13 @@ app.post("/getWallet", async (req, res) => {
 
     let normalizedAddress;
     try {
-      normalizedAddress = ethers.getAddress(address); // checksum
+      normalizedAddress = ethers.getAddress(address);
     } catch {
       return res.status(400).json({ error: "Invalid wallet address" });
     }
 
     const balances = await getChainBalances(normalizedAddress);
-    // const tokens = await getTokens(normalizedAddress);
+    // const tokens = await getWalletBalances(normalizedAddress);
     const lastTransactions = await getNormalTransactions(normalizedAddress);
 
     res.json({
