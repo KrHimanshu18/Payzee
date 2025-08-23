@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "react-router-dom";
 import { LoginContext } from "@/context/LoginContext";
+import CryptoGrid from "@/pages/CryptoGrid";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const Dashboard = () => {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">ZollPay</span>
+              <span className="text-xl font-bold">Payzee</span>
             </Link>
           </div>
 
@@ -220,8 +221,8 @@ const Dashboard = () => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-crypto-blue to-crypto-purple rounded-3xl blur-lg opacity-30"></div>
                         <div className="relative rounded-3xl overflow-hidden border-4 border-white/10 bg-crypto-dark shadow-lg">
                           <img
-                            src="/lovable-uploads/1243437e-3794-4ab8-b120-e41283d88334.png"
-                            alt="ZollPay App"
+                            src="\src\assets\Scan.jpg"
+                            alt="Payzee App"
                             className="w-full h-auto"
                           />
                         </div>
@@ -349,214 +350,21 @@ const Dashboard = () => {
                 <div className="flex backdrop-blur-md bg-white/5 rounded-full p-1 gap-2">
                   <Button
                     size="sm"
-                    className="bg-crypto-blue text-white rounded-full"
+                    className="bg-crypto-blue text-white rounded-f  ull"
                   >
                     Top Assets
                   </Button>
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="ghost"
                     className="text-gray-300 rounded-full"
                   >
                     Your Watchlist
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Bitcoin */}
-                <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#F7931A]/20 flex items-center justify-center">
-                        <Bitcoin size={20} className="text-[#F7931A]" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold">Bitcoin</h4>
-                        <span className="text-xs text-gray-400">BTC</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center px-2 py-1 rounded-full bg-green-500/20 text-green-500 text-xs">
-                      +2.4%
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-2xl font-bold">₹3,245,000</span>
-                    <div className="h-10 w-24">
-                      <svg
-                        viewBox="0 0 100 30"
-                        width="100%"
-                        height="100%"
-                        preserveAspectRatio="none"
-                      >
-                        <path
-                          d="M0,15 Q20,5 40,20 Q60,30 80,10 Q90,5 100,15"
-                          fill="none"
-                          stroke="#22c55e"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ethereum */}
-                <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#627EEA]/20 flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 32 32"
-                          className="text-[#627EEA]"
-                        >
-                          <g fill="none" fillRule="evenodd">
-                            <circle cx="16" cy="16" r="16" fill="#627EEA" />
-                            <g fill="#FFF" fillRule="nonzero">
-                              <path
-                                fillOpacity=".602"
-                                d="M16.498 4v8.87l7.497 3.35z"
-                              />
-                              <path d="M16.498 4L9 16.22l7.498-3.35z" />
-                              <path
-                                fillOpacity=".602"
-                                d="M16.498 21.968v6.027L24 17.616z"
-                              />
-                              <path d="M16.498 27.995v-6.028L9 17.616z" />
-                              <path
-                                fillOpacity=".2"
-                                d="M16.498 20.573l7.497-4.353-7.497-3.348z"
-                              />
-                              <path
-                                fillOpacity=".602"
-                                d="M9 16.22l7.498 4.353v-7.701z"
-                              />
-                            </g>
-                          </g>
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="font-bold">Ethereum</h4>
-                        <span className="text-xs text-gray-400">ETH</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center px-2 py-1 rounded-full bg-red-500/20 text-red-500 text-xs">
-                      -1.2%
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-2xl font-bold">₹175,000</span>
-                    <div className="h-10 w-24">
-                      <svg
-                        viewBox="0 0 100 30"
-                        width="100%"
-                        height="100%"
-                        preserveAspectRatio="none"
-                      >
-                        <path
-                          d="M0,10 Q10,15 30,5 Q50,0 70,15 Q90,25 100,20"
-                          fill="none"
-                          stroke="#ef4444"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tether */}
-                <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#53ae94]/20 flex items-center justify-center">
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 2000 2000"
-                          className="text-[#53ae94]"
-                        >
-                          <path
-                            d="M1000,0c552.26,0,1000,447.74,1000,1000S1552.24,2000,1000,2000,0,1552.38,0,1000,447.68,0,1000,0"
-                            fill="#53ae94"
-                          />
-                          <path
-                            d="M1123.42,866.76V718H1463.6V491.34H537.28V718H877.5V866.64C601,879.34,393.1,934.1,393.1,999.7s208,120.36,484.4,133.14v476.5h246V1132.8c276-12.74,483.48-67.46,483.48-133s-207.48-120.26-483.48-133m0,225.64v-0.12c-6.94.44-42.6,2.58-122,2.58-63.48,0-108.14-1.8-123.88-2.62v0.2C633.34,1081.66,451,1039.12,451,988.22S633.36,894.84,877.62,884V1050.1c16,1.1,61.76,3.8,124.92,3.8,75.86,0,114-3.16,121-3.8V884c243.8,10.86,425.72,53.44,425.72,104.16s-182,93.32-425.72,104.18"
-                            fill="#fff"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="font-bold">Tether</h4>
-                        <span className="text-xs text-gray-400">USDT</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center px-2 py-1 rounded-full bg-green-500/20 text-green-500 text-xs">
-                      +0.1%
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-2xl font-bold">₹83</span>
-                    <div className="h-10 w-24">
-                      <svg
-                        viewBox="0 0 100 30"
-                        width="100%"
-                        height="100%"
-                        preserveAspectRatio="none"
-                      >
-                        <path
-                          d="M0,15 Q25,15 50,15 Q75,15 100,15"
-                          fill="none"
-                          stroke="#22c55e"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* XRP */}
-                <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#23292F]/20 flex items-center justify-center">
-                        <svg width="20" height="20" viewBox="0 0 24 24">
-                          <path
-                            d="M21.96 11.216L19.193 6l-2.743 5.216h-2.277L17.18 6h-2.343l-3.388 6.602H9.18L11.343 6H9.09L5.913 11.216h-1.53l-1.928 3.728h9.091l1.515-2.927h1.515l-1.515 2.927h9.091z"
-                            fill="#23292F"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="font-bold">Ripple</h4>
-                        <span className="text-xs text-gray-400">XRP</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center px-2 py-1 rounded-full bg-green-500/20 text-green-500 text-xs">
-                      +5.7%
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <span className="text-2xl font-bold">₹40</span>
-                    <div className="h-10 w-24">
-                      <svg
-                        viewBox="0 0 100 30"
-                        width="100%"
-                        height="100%"
-                        preserveAspectRatio="none"
-                      >
-                        <path
-                          d="M0,20 Q10,15 20,18 Q40,25 60,5 Q80,0 100,10"
-                          fill="none"
-                          stroke="#22c55e"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CryptoGrid></CryptoGrid>
 
               <div className="mt-8 text-center">
                 <Button className="bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full px-8">
@@ -580,7 +388,7 @@ const Dashboard = () => {
                     Ready to Experience the Future of Crypto?
                   </h2>
                   <p className="text-xl text-gray-300 mb-8">
-                    Explore all the features ZollPay has to offer. Manage your
+                    Explore all the features Payzee has to offer. Manage your
                     crypto portfolio, make transactions, and track your history
                     all in one place.
                   </p>
@@ -607,7 +415,7 @@ const Dashboard = () => {
                   <div className="relative">
                     <div className="absolute inset-0 bg-glow-blue rounded-full filter blur-xl opacity-70"></div>
                     <img
-                      src="/lovable-uploads/23aa057c-33a8-4930-bcb2-7b8f10af13ff.png"
+                      src="\src\assets\Crypto.jpg"
                       alt="Mobile App"
                       className="relative z-10 w-60 h-auto rounded-2xl border-4 border-white/10 shadow-lg"
                     />
