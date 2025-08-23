@@ -108,64 +108,25 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/getDetails", async (req, res) => {
-  try {
-    const { address } = req.body;
-
-    if (!address) {
-      return res.status(400).json({ error: "Wallet address required" });
-    }
-
-    let normalizedAddress;
-    try {
-      normalizedAddress = ethers.getAddress(address); // checksum validation
-    } catch (err) {
-      return res.status(400).json({ error: "Invalid wallet address" });
-    }
-
-    const balance = await provider.getBalance(normalizedAddress);
-    const network = await provider.getNetwork();
-
-    res.json({
-      walletAddress: normalizedAddress,
-      balance: ethers.formatEther(balance), // already string
-      network: network.name,
-      chainId: network.chainId.toString(), // convert BigInt → string
-    });
-  } catch (error) {
-    console.error("Error fetching details:", error);
-    res.status(500).json({ error: "Error fetching details" });
-  }
-});
-
-const explorers = {
-  1: "https://api.etherscan.io/api", // Ethereum
-  8453: "https://api.basescan.org/api", // Base
-  42161: "https://api.arbiscan.io/api", // Arbitrum
-  10: "https://api-optimistic.etherscan.io/api", // Optimism
-  137: "https://api.polygonscan.com/api", // Polygon
-};
-
 async function getChainBalances(address) {
-  const chains = [42161, 8453, 10, 534352, 81457]; // arbitrum, base, optimism, scroll, blast
+  const chains = [1, 42161, 8453, 10, 137];
   const apiKey = process.env.MULTICHAIN_API_KEY;
   let balances = {};
 
   for (const chain of chains) {
     try {
-      const query = await fetch(
-        `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`
-      );
-      const response = await query.json();
+      const url = `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
+      console.log(`\n=== Fetching balance for chain ${chain} ===`);
+      console.log("URL:", url);
 
-      // Log the full response
-      console.log(`Full balance response for chain ${chain}:`, response);
+      const response = await axios.get(url).then((res) => res.data);
+      console.log("Full balance response:", JSON.stringify(response, null, 2));
 
       balances[chain] = response?.result
         ? ethers.formatEther(response.result)
         : "0";
     } catch (err) {
-      console.error(`Error fetching balance for chain ${chain}:`, err);
+      console.error(`Error fetching balance for chain ${chain}:`, err.message);
       balances[chain] = "error";
     }
   }
@@ -173,82 +134,116 @@ async function getChainBalances(address) {
   return balances;
 }
 
-async function getTokens(address, chainId) {
-  const baseUrl = explorers[chainId];
-  const key = process.env.MULTICHAIN_API_KEY;
-  let tokens = {};
+export async function getTokens(address) {
+  const chains = [1, 42161, 8453, 10, 137]; // Ethereum + other chains
+  const apiKey = process.env.MULTICHAIN_API_KEY;
+  let allTokens = {};
 
-  try {
-    const resp = await axios.get(
-      `${baseUrl}?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${key}`
-    );
+  for (const chainId of chains) {
+    const baseUrl = explorers[chainId];
+    if (!baseUrl) {
+      console.warn(`No explorer URL for chain ${chainId}, skipping.`);
+      continue;
+    }
 
-    // Log the full token transaction response
-    console.log(`Full token tx response for chain ${chainId}:`, resp.data);
+    try {
+      console.log(`\n=== Fetching token transactions for chain ${chainId} ===`);
 
-    if (Array.isArray(resp.data?.result)) {
-      for (const tx of resp.data.result) {
+      const url = `${baseUrl}/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+      console.log("URL:", url);
+
+      const resp = await axios.get(url);
+      const data = resp.data;
+      console.log("Full token tx response:", JSON.stringify(data, null, 2));
+
+      if (!Array.isArray(data?.result)) {
+        allTokens[chainId] = {};
+        continue;
+      }
+
+      const tokens = {};
+
+      for (const tx of data.result) {
         if (!tx?.tokenSymbol || !tx?.tokenDecimal) continue;
         const symbol = tx.tokenSymbol;
 
         if (!tokens[symbol]) tokens[symbol] = ethers.BigNumber.from(0);
 
-        if (tx.to?.toLowerCase() === address.toLowerCase()) {
+        if (tx.to?.toLowerCase() === address.toLowerCase())
           tokens[symbol] = tokens[symbol].add(ethers.BigNumber.from(tx.value));
-        }
-        if (tx.from?.toLowerCase() === address.toLowerCase()) {
+        if (tx.from?.toLowerCase() === address.toLowerCase())
           tokens[symbol] = tokens[symbol].sub(ethers.BigNumber.from(tx.value));
-        }
       }
 
+      // Convert to human-readable format
       for (const symbol in tokens) {
         const decimals = parseInt(
-          resp.data.result.find((t) => t.tokenSymbol === symbol)
-            ?.tokenDecimal || "18"
+          data.result.find((t) => t.tokenSymbol === symbol)?.tokenDecimal ||
+            "18"
         );
         tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
       }
+
+      allTokens[chainId] = tokens;
+    } catch (err) {
+      console.error(`Error fetching tokens for chain ${chainId}:`, err.message);
+      allTokens[chainId] = {};
     }
-  } catch (err) {
-    console.error(`Error fetching tokens for chain ${chainId}:`, err?.message);
+
+    await new Promise((res) => setTimeout(res, 500));
   }
 
-  return tokens;
+  return allTokens;
 }
 
-export async function getLastTransactions(address) {
-  let allTxs = {};
+export async function getNormalTransactions(
+  address,
+  chains = [1, 42161, 8453, 10, 137]
+) {
   const apiKey = process.env.MULTICHAIN_API_KEY;
+  const allTxs = {};
 
-  for (const [chainId, baseUrl] of Object.entries(explorers)) {
+  for (const chain of chains) {
     try {
-      const resp = await axios.get(
-        `${baseUrl}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
+      console.log(`\n=== Fetching normal transactions for chain ${chain} ===`);
+      const url = `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+      console.log("URL:", url);
+
+      const resp = await axios.get(url);
+      const data = resp.data;
+      console.log("Full API response:", JSON.stringify(data, null, 2));
+
+      if (!Array.isArray(data?.result)) {
+        allTxs[chain] = [];
+        continue;
+      }
+
+      allTxs[chain] = data.result.map((tx) => ({
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        valueETH: ethers.formatEther(tx.value),
+        timeStamp: tx.timeStamp,
+        gasUsed: tx.gasUsed,
+      }));
+
+      console.log(
+        `Fetched ${allTxs[chain].length} transactions for chain ${chain}`
       );
-
-      // Log the full transaction response
-      console.log(`Full tx response for chain ${chainId}:`, resp.data);
-
-      allTxs[chainId] = Array.isArray(resp.data?.result)
-        ? resp.data.result.map((tx) => ({
-            hash: tx.hash,
-            from: tx.from,
-            to: tx.to,
-            valueETH: ethers.formatEther(tx.value),
-            timeStamp: tx.timeStamp,
-            gasUsed: tx.gasUsed,
-          }))
-        : [];
     } catch (err) {
-      console.error(`Error fetching tx for chain ${chainId}:`, err.message);
-      allTxs[chainId] = [];
+      console.error(
+        `Error fetching transactions for chain ${chain}:`,
+        err.message
+      );
+      allTxs[chain] = [];
     }
+
+    await new Promise((res) => setTimeout(res, 500));
   }
 
   return allTxs;
 }
 
-// 🔹 Main API
 app.post("/getWallet", async (req, res) => {
   try {
     const { address } = req.body;
@@ -262,28 +257,14 @@ app.post("/getWallet", async (req, res) => {
       return res.status(400).json({ error: "Invalid wallet address" });
     }
 
-    // Fetch everything via reusable functions
-    const [balances, tokens, lastTransactions] = await Promise.all([
-      getChainBalances(normalizedAddress),
-      getTokens(normalizedAddress),
-      getLastTransactions(normalizedAddress),
-    ]);
-
-    const network = await provider.getNetwork();
-    const txCount = await provider.getTransactionCount(normalizedAddress);
-    const code = await provider.getCode(normalizedAddress);
-    const isContract = code !== "0x";
-    const ens = await provider.lookupAddress(normalizedAddress);
+    const balances = await getChainBalances(normalizedAddress);
+    // const tokens = await getTokens(normalizedAddress);
+    const lastTransactions = await getNormalTransactions(normalizedAddress);
 
     res.json({
       walletAddress: normalizedAddress,
-      network: network.name,
-      chainId: network.chainId.toString(),
       balances,
-      txCount,
-      isContract,
-      ensName: ens || null,
-      tokens,
+      // tokens,
       lastTransactions,
     });
   } catch (error) {
