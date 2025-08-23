@@ -167,7 +167,7 @@ const WalletPage = () => {
     toast.info("Saving your wallet address...", { id: "set-address" });
     try {
       console.log(address);
-      const res = await fetch(`${url}/setWalletAddress`, {
+      const res = await fetch(`${url}/updateWalletAddress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, walletAddress: address }),
@@ -252,6 +252,7 @@ const WalletPage = () => {
 
     if (isSuccess) {
       setWalletAddress(newAddress); // Update context
+      fetchWalletDetails(newAddress);
       setAddressModalOpen(false); // Close modal
     }
   };
@@ -423,7 +424,10 @@ const WalletPage = () => {
                     />
                     Refresh
                   </Button>
-                  <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
+                  <Button
+                    onClick={() => setAddressModalOpen(true)} // 👈 Open modal on click
+                    className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden"
+                  >
                     <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
                     <Plus size={18} className="mr-2 relative" />
                     <span className="relative">Update/Change Wallet</span>

@@ -108,6 +108,96 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.post("/setWalletAddress", async (req, res) => {
+  const { email, walletAddress } = req.body;
+
+  if (!email || !walletAddress) {
+    return res
+      .status(400)
+      .json({ message: "Email and wallet address required" });
+  }
+
+  try {
+    // Find the user
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if account details already exist
+    const accountExists = await prisma.accountDetails.findUnique({
+      where: { userId: user.id },
+    });
+
+    let account;
+    if (accountExists) {
+      // Update existing account
+      account = await prisma.accountDetails.update({
+        where: { userId: user.id },
+        data: { walletAddress },
+      });
+    } else {
+      // Create new account details
+      account = await prisma.accountDetails.create({
+        data: {
+          walletAddress,
+          userId: user.id,
+        },
+      });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Wallet added/updated successfully", account });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to add wallet", error: error.message });
+  }
+});
+
+app.post("/updateWalletAddress", async (req, res) => {
+  const { email, walletAddress } = req.body;
+
+  if (!email || !walletAddress) {
+    return res
+      .status(400)
+      .json({ message: "Email and wallet address required" });
+  }
+
+  try {
+    // Find the user
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update existing account
+    const account = await prisma.accountDetails.update({
+      where: { userId: user.id },
+      data: { walletAddress },
+    });
+
+    res
+      .status(200)
+      .json({ message: "Wallet address updated successfully", account });
+  } catch (error) {
+    console.error(error);
+    // Handle case if accountDetails does not exist
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ message: "Account details not found for this user" });
+    }
+    res
+      .status(500)
+      .json({ message: "Failed to update wallet", error: error.message });
+  }
+});
+
 async function getChainBalances(address) {
   const chains = [1, 42161, 8453, 10, 137];
   const apiKey = process.env.MULTICHAIN_API_KEY;

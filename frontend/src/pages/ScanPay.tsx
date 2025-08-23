@@ -55,7 +55,6 @@ function ScanPay() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [amount, setAmount] = useState("");
-  const [selectedCrypto, setSelectedCrypto] = useState("");
   const [cameraActive, setCameraActive] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [scanningMessage, setScanningMessage] = useState(
@@ -81,7 +80,6 @@ function ScanPay() {
       symbol: "USDT",
     },
   ];
-  const upiId = "example@upi";
 
   useEffect(() => {
     if (!name) {
@@ -155,7 +153,7 @@ function ScanPay() {
   };
 
   const handleSubmit = async () => {
-    if (!amount || !selectedCrypto) {
+    if (!amount) {
       toast.error("Please enter amount and select cryptocurrency");
       return;
     }
@@ -167,8 +165,7 @@ function ScanPay() {
         });
         const sender = accounts[0];
         const transactionParameters = {
-          // to: "0x9fF40834755C55896da370aC057A7E3E1f24Bf07", // Replace with recipient's wallet address
-          to: { walletAddress },
+          to: walletAddress,
           from: sender,
           value: (parseFloat(amount) * 1e18).toString(16), // Convert amount to Wei
         };
@@ -187,8 +184,6 @@ function ScanPay() {
 
         console.log("Transaction submitted with:", {
           amount,
-          selectedCrypto,
-          upiId,
           sender,
         });
       } else {
@@ -198,7 +193,6 @@ function ScanPay() {
 
       // Clear form after successful submission
       setAmount("");
-      setSelectedCrypto("");
       setCapturedImage(null);
     } catch (error) {
       console.error("Error processing transaction:", error);
@@ -527,27 +521,53 @@ function ScanPay() {
                 </CardContent>
               </Card>
 
-              <Card className="relative overflow-hidden backdrop-blur-sm bg-gradient-to-br from-black/40 to-black/20 border border-gray-800/50 shadow-xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-neon-yellow/5 to-orange-500/10 pointer-events-none"></div>
+              <Card className="relative overflow-hidden backdrop-blur-sm bg-gradient-to-br from-black/40 to-black/20 border border-gray-800/50 shadow-xl mt-6">
+                <div className="absolute inset-0 bg-gradient-to-br from-crypto-purple/10 to-crypto-blue/5 pointer-events-none"></div>
 
                 <CardHeader className="relative z-10">
                   <CardTitle className="flex items-center gap-2">
                     <Send className="text-crypto-blue" />
-                    <span>Recent Payments</span>
+                    <span>Send Payment</span>
                   </CardTitle>
                   <CardDescription>
-                    Your recent scan & pay transactions
+                    Enter a wallet address to send crypto instantly
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="relative z-10">
-                  <div className="text-center py-6">
-                    <p className="text-gray-400 mb-2">No recent payments</p>
-                    <p className="text-sm text-gray-500">
-                      Your recent payments will appear here
-                    </p>
+                <CardContent className="relative z-10 space-y-4">
+                  <Input
+                    placeholder="Enter wallet address"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    className="bg-black/40 border-gray-800/50 text-white"
+                  />
+
+                  <div className="space-y-2">
+                    <label className="text-sm text-gray-400">Amount</label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="bg-black/40 border-gray-800/50 focus:border-crypto-blue focus:ring-crypto-blue/20"
+                    />
                   </div>
                 </CardContent>
+
+                <CardFooter className="relative z-10 flex justify-end">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!amount || !walletAddress}
+                    className={cn(
+                      "bg-gradient-to-r from-crypto-blue to-crypto-blue/80 hover:opacity-90 transition-all duration-300 shadow-lg shadow-crypto-blue/20",
+                      (!amount || !walletAddress) &&
+                        "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <Send size={18} className="mr-2" />
+                    Send Payment
+                  </Button>
+                </CardFooter>
               </Card>
             </div>
           </div>
@@ -575,9 +595,6 @@ function ScanPay() {
                 UPI ID / Wallet Address
               </label>
               <div className="bg-black/40 border border-gray-800/50 rounded-md p-3 flex justify-between items-center">
-                <span className="text-gray-300 text-sm font-mono truncate">
-                  {upiId}
-                </span>
                 <div className="h-6 w-6 rounded-full bg-crypto-blue/20 flex items-center justify-center text-crypto-blue">
                   <CheckCircle2 size={14} />
                 </div>
@@ -595,30 +612,7 @@ function ScanPay() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">
-                Select Cryptocurrency
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {availableCryptos.map((crypto) => (
-                  <button
-                    key={crypto.name}
-                    onClick={() => setSelectedCrypto(crypto.name)}
-                    className={cn(
-                      "flex flex-col items-center p-3 rounded-md border transition-all",
-                      selectedCrypto === crypto.name
-                        ? "bg-crypto-blue/20 border-crypto-blue"
-                        : "bg-black/40 border-gray-800/50 hover:bg-black/60"
-                    )}
-                  >
-                    <span className="mb-1">{crypto.icon}</span>
-                    <span className="text-sm">{crypto.symbol}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {amount && selectedCrypto && (
+            {amount && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center bg-black/40 border border-gray-800/50 rounded-md p-3">
                   <span className="text-gray-400">Estimated Value</span>
@@ -647,10 +641,10 @@ function ScanPay() {
 
             <Button
               onClick={handleSubmit}
-              disabled={!amount || !selectedCrypto}
+              disabled={!amount}
               className={cn(
                 "bg-gradient-to-r from-crypto-blue to-crypto-blue/80 hover:opacity-90 transition-all duration-300 shadow-lg shadow-crypto-blue/20",
-                (!amount || !selectedCrypto) && "opacity-50 cursor-not-allowed"
+                !amount && "opacity-50 cursor-not-allowed"
               )}
             >
               <Send size={18} className="mr-2" />

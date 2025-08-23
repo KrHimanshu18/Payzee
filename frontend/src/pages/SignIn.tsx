@@ -34,11 +34,16 @@ const SignIn = () => {
       }
 
       setName(data.user.name);
-      if (data.user.account.walletAddress) {
-        console.log(data.user.account.walletAddress);
-        setWalletAddress(data.user.account.walletAddress);
+      if (data.user.account) {
+        if (data.user.account.walletAddress) {
+          console.log(data.user.account.walletAddress);
+          setWalletAddress(data.user.account.walletAddress);
+        } else {
+          setWalletAddress("");
+          console.log("No wallet address found");
+        }
       } else {
-        console.log("No wallet address found");
+        setWalletAddress("");
       }
 
       toast.success("Login successful! Redirecting...");
