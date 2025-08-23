@@ -254,7 +254,7 @@ function ScanPay() {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">ZollPay</span>
+              <span className="text-xl font-bold">Payzee</span>
             </Link>
           </div>
 

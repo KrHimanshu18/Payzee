@@ -199,8 +199,6 @@ const WalletPage = () => {
     toast.info("Fetching wallet details...", { id: "fetch-wallet" });
 
     try {
-      console.log("Name: " + name);
-      console.log("Address: " + address);
       const response = await fetch(`${url}/getWallet?address=${address}`, {
         method: "GET",
       });
@@ -208,16 +206,35 @@ const WalletPage = () => {
 
       const data = await response.json();
       console.log(data);
-      // Convert balance values to numbers before summing
+
+      // Calculate total balance
       const totalBalance = Object.values(data.balances)
         .map((val) => parseFloat(val as string) || 0)
         .reduce((acc, val) => acc + val, 0);
+
+      // 🔥 Convert lastTransactions (all chains) into a single recentTransactions array
+      const combinedTxs = Object.values(data.lastTransactions || {})
+        .flat()
+        .map((tx: any) => ({
+          type:
+            tx.from?.toLowerCase() === address.toLowerCase()
+              ? "send"
+              : "receive",
+          crypto: tx.symbol || "ETH", // default if missing
+          amount: tx.valueETH || "0",
+          from: tx.from,
+          to: tx.to,
+          date: new Date(Number(tx.timeStamp) * 1000).toLocaleDateString(),
+          status: "completed",
+          icon: <CircleDollarSign size={16} className="text-purple-500" />, // you can swap per symbol
+        }));
 
       setWalletData({
         ...mockWalletDetails,
         walletAddress: data.walletAddress,
         balances: data.balances,
-        lastTransactions: data.lastTransactions,
+        lastTransactions: data.lastTransactions, // keep raw
+        recentTransactions: combinedTxs, // 👈 use this in UI
         totalBalance: totalBalance.toFixed(10),
       });
 
@@ -326,7 +343,7 @@ const WalletPage = () => {
                     <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold">ZollPay</span>
+                <span className="text-xl font-bold">Payzee</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
@@ -518,47 +535,44 @@ const WalletPage = () => {
               <div className="mt-16 mb-12">
                 <h2 className="text-2xl font-bold mb-6 text-white/90 flex items-center">
                   <span className="relative">
-                    Recent Activity
+                    Last Transaction
                     <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
                   </span>
                 </h2>
 
                 {walletData.recentTransactions.length > 0 ? (
-                  <div className="space-y-4">
-                    {walletData.recentTransactions.map((transaction, index) => (
-                      <div
-                        key={index}
-                        className="crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl p-5 hover:border-white/20 transition-all duration-300 group"
-                      >
+                  (() => {
+                    const lastTx = walletData.recentTransactions[0];
+
+                    return (
+                      <div className="crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl p-5 hover:border-white/20 transition-all duration-300 group">
                         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-md border border-white/10">
-                              {transaction.icon}
+                              {lastTx.icon}
                             </div>
                             <div>
                               <div className="flex items-center">
                                 <span
                                   className={
-                                    transaction.type === "send"
+                                    lastTx.type === "send"
                                       ? "text-red-400"
                                       : "text-green-400"
                                   }
                                 >
-                                  {transaction.type === "send"
-                                    ? "Sent"
-                                    : "Received"}
+                                  {lastTx.type === "send" ? "Sent" : "Received"}
                                 </span>
                                 <span className="text-gray-400 mx-2">•</span>
                                 <span className="text-white">
-                                  {transaction.amount} {transaction.crypto}
+                                  {lastTx.amount} {lastTx.crypto}
                                 </span>
                               </div>
                               <p className="text-sm text-gray-400">
-                                {transaction.type === "send"
-                                  ? `To: ${transaction.to}`
-                                  : `From: ${transaction.from}`}
+                                {lastTx.type === "send"
+                                  ? `To: ${lastTx.to}`
+                                  : `From: ${lastTx.from}`}
                               </p>
                             </div>
                           </div>
@@ -566,7 +580,7 @@ const WalletPage = () => {
                           <div className="text-right">
                             <div className="flex items-center justify-end mb-1">
                               <span className="text-sm text-gray-300">
-                                {transaction.date}
+                                {lastTx.date}
                               </span>
                               <CircleCheck
                                 size={14}
@@ -574,29 +588,19 @@ const WalletPage = () => {
                               />
                             </div>
                             <div className="text-xs text-gray-500 uppercase">
-                              {transaction.status}
+                              {lastTx.status}
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                    <Link to="/transaction">
-                      <Button className="w-full mt-4 bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 group relative overflow-hidden">
-                        <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                        <span className="relative">View All Transactions</span>
-                      </Button>
-                    </Link>
-                  </div>
+                    );
+                  })()
                 ) : (
                   <div className="crypto-card flex flex-col items-center justify-center py-16 relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl hover:border-white/20 transition-all duration-300 group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[#33C3F0]/5 to-purple-500/5 pointer-events-none"></div>
                     <p className="text-gray-400 mb-6 relative z-10">
-                      No recent activity
+                      No transactions found
                     </p>
-                    <Button className="bg-gradient-to-r from-[#33C3F0] to-[#1EAEDB] hover:opacity-90 transition-all duration-300 shadow-lg shadow-[#33C3F0]/20 px-8 py-6 h-auto relative z-10 group">
-                      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                      <span className="relative">Make a Transaction</span>
-                    </Button>
                   </div>
                 )}
               </div>
@@ -609,7 +613,7 @@ const WalletPage = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-500">
-                © 2023 ZollPay. All rights reserved.
+                © 2023 Payzee. All rights reserved.
               </div>
               <div className="flex items-center gap-6">
                 <Link

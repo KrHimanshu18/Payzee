@@ -11,16 +11,9 @@ import {
   Filter,
   Search,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,126 +26,78 @@ import {
 import { toast } from "sonner";
 import { LoginContext } from "@/context/LoginContext";
 
-// Mock transaction data
-const mockTransactions = [
-  // Crypto Transactions
-  {
-    id: "tx1",
-    type: "send",
-    amount: 0.01,
-    currency: "BTC",
-    recipient: "Coffee Shop",
-    recipientAddress: "0x9A8EB5bB5cF88cfcEe9613368636f458800e73DE",
-    sender: "Your Wallet",
-    senderAddress: "0x7F5EB5bB5cF88cfcEe9613368636f458800e62CB",
-    status: "completed",
-    timestamp: new Date("2025-03-31T07:22:36").toISOString(),
-    hash: "0x3a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
-    fee: 0.0001,
-    valueInr: 2500,
-    category: "crypto",
-  },
-  {
-    id: "tx2",
-    type: "receive",
-    amount: 0.5,
-    currency: "ETH",
-    recipient: "Your Wallet",
-    recipientAddress: "0x7F5EB5bB5cF88cfcEe9613368636f458800e62CB",
-    sender: "John Doe",
-    senderAddress: "0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B",
-    status: "completed",
-    timestamp: new Date("2025-03-31T05:52:36").toISOString(),
-    hash: "0x9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a",
-    fee: 0.002,
-    valueInr: 5000,
-    category: "crypto",
-  },
-  {
-    id: "tx3",
-    type: "send",
-    amount: 100,
-    currency: "USDT",
-    recipient: "Online Store",
-    recipientAddress: "0x8F7E6D5C4B3A2918F7E6D5C4B3A291D2C1B3A4F5",
-    sender: "Your Wallet",
-    senderAddress: "0x7F5EB5bB5cF88cfcEe9613368636f458800e62CB",
-    status: "completed",
-    timestamp: new Date("2025-03-30T14:25:36").toISOString(),
-    hash: "0x7d6e5f4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e",
-    fee: 0.5,
-    valueInr: 8000,
-    category: "crypto",
-  },
-  {
-    id: "tx4",
-    type: "receive",
-    amount: 0.008,
-    currency: "BTC",
-    recipient: "Your Wallet",
-    recipientAddress: "0x7F5EB5bB5cF88cfcEe9613368636f458800e62CB",
-    sender: "Mining Pool",
-    senderAddress: "0x6A5F4E3D2C1B0A9F8E7D6C5B4A3F2E1D0C9B8A7",
-    status: "pending",
-    timestamp: new Date("2025-03-29T18:42:36").toISOString(),
-    hash: "0x5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d",
-    fee: 0,
-    valueInr: 12000,
-    category: "crypto",
-  },
-  // INR Transactions
-  {
-    id: "tx5",
-    type: "send",
-    amount: 5000,
-    currency: "INR",
-    recipient: "Movie Tickets",
-    recipientAddress: "user123@upi",
-    sender: "Your Wallet",
-    senderAddress: "user456@upi",
-    status: "completed",
-    timestamp: new Date("2025-03-28T10:15:22").toISOString(),
-    hash: "UPI123456789",
-    fee: 0,
-    valueInr: 5000,
-    category: "inr",
-  },
-  {
-    id: "tx6",
-    type: "receive",
-    amount: 10000,
-    currency: "INR",
-    recipient: "Your Wallet",
-    recipientAddress: "user456@upi",
-    sender: "Monthly Salary",
-    senderAddress: "user789@upi",
-    status: "completed",
-    timestamp: new Date("2025-03-27T09:30:45").toISOString(),
-    hash: "UPI987654321",
-    fee: 0,
-    valueInr: 10000,
-    category: "inr",
-  },
-];
-
 function Transaction() {
   const navigate = useNavigate();
-  const { name } = useContext(LoginContext);
-  const [transactions, setTransactions] = useState(mockTransactions);
-  const [selectedTx, setSelectedTx] = useState<
-    (typeof mockTransactions)[0] | null
-  >(null);
+  const { name, walletAddress } = useContext(LoginContext);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [selectedTx, setSelectedTx] = useState<any | null>(null);
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!name) {
-      navigate("/");
-    }
-  }, [navigate]);
+    if (!name) navigate("/");
+  }, [navigate, name]);
 
-  // Get counts for the summary
+  // ✅ Fetch real transactions from backend
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        const address = walletAddress;
+        if (!address) {
+          toast.error(
+            "Wallet address not found. Please connect your wallet first."
+          );
+          return;
+        }
+
+        // --- UPDATED: URL now matches the WalletPage component ---
+        const res = await fetch(
+          `http://localhost:8081/getWallet?address=${address}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch wallet data");
+
+        const data = await res.json();
+
+        // Flatten the lastTransactions object which contains arrays of transactions from different chains
+        const allTxs = Object.values(data.lastTransactions || {}).flat();
+
+        // Map the raw transaction data to a structured format for the UI
+        const mapped = allTxs.map((tx: any, idx: number) => ({
+          id: `tx-${idx}`,
+          type:
+            tx.from?.toLowerCase() === address.toLowerCase()
+              ? "send"
+              : "receive",
+          amount: parseFloat(tx.valueETH || "0"),
+          currency: tx.symbol || "ETH",
+          recipient: tx.to || "Unknown",
+          recipientAddress: tx.to || "",
+          sender: tx.from || "Unknown",
+          senderAddress: tx.from || "",
+          status: "completed", // Assuming all fetched txs are completed
+          timestamp: new Date(Number(tx.timeStamp) * 1000).toISOString(),
+          hash: tx.hash,
+          fee: 0, // Fee data would need to be provided by the backend
+          valueInr: parseFloat(tx.valueInr || "0"), // Assuming backend provides this conversion
+          category: "crypto",
+        }));
+
+        setTransactions(mapped);
+      } catch (err) {
+        console.error("Error fetching transactions", err);
+        toast.error("Could not fetch transaction history.");
+      } finally {
+        setLoading(false); // stop loader
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  // --- helpers ---
   const allCount = transactions.length;
   const sentCount = transactions.filter((tx) => tx.type === "send").length;
   const receivedCount = transactions.filter(
@@ -161,8 +106,6 @@ function Transaction() {
   const pendingCount = transactions.filter(
     (tx) => tx.status === "pending"
   ).length;
-
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -177,9 +120,8 @@ function Transaction() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleString("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -187,11 +129,8 @@ function Transaction() {
       minute: "numeric",
       hour12: true,
     });
-  };
 
-  // Apply filters to transactions
   const filteredTransactions = transactions.filter((tx) => {
-    // Apply type filter
     if (
       filter !== "all" &&
       ((filter === "sent" && tx.type !== "send") ||
@@ -199,24 +138,21 @@ function Transaction() {
     ) {
       return false;
     }
-
-    // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
         tx.currency.toLowerCase().includes(query) ||
         tx.recipient.toLowerCase().includes(query) ||
         tx.sender.toLowerCase().includes(query) ||
-        tx.status.toLowerCase().includes(query)
+        tx.status.toLowerCase().includes(query) ||
+        tx.hash.toLowerCase().includes(query)
       );
     }
-
     return true;
   });
 
   const handleLogout = () => {
     toast.success("Logged out successfully");
-    // In a real app, we would handle actual logout logic here
   };
 
   return (
@@ -260,7 +196,7 @@ function Transaction() {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">ZollPay</span>
+              <span className="text-xl font-bold">Payzee</span>
             </Link>
           </div>
 
@@ -297,9 +233,9 @@ function Transaction() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
-                J
+                {name ? name.charAt(0).toUpperCase() : "U"}
               </div>
-              <span>{name}</span>
+              <span>{name || "User"}</span>
             </div>
             <Link to="/" onClick={handleLogout}>
               <Button
@@ -324,7 +260,7 @@ function Transaction() {
           {/* Transaction Summary */}
           <Card className="mb-8 bg-gray-900/40 border-gray-800 backdrop-blur-sm overflow-hidden">
             <CardContent className="p-0">
-              <div className="grid grid-cols-4 divide-x divide-gray-800">
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-800">
                 <div className="p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-800 mb-2">
                     <History size={20} className="text-white" />
@@ -365,7 +301,7 @@ function Transaction() {
               </div>
               <input
                 type="text"
-                placeholder="Search transactions..."
+                placeholder="Search by address, hash, or currency..."
                 className="w-full pl-10 pr-4 py-2 bg-gray-900/40 border border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-crypto-blue"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -376,7 +312,7 @@ function Transaction() {
               <div className="flex rounded-lg overflow-hidden bg-gray-900/40 border border-gray-800">
                 <button
                   onClick={() => setFilter("all")}
-                  className={`px-4 py-2 text-sm ${
+                  className={`px-4 py-2 text-sm transition-colors ${
                     filter === "all"
                       ? "bg-crypto-blue text-white"
                       : "bg-transparent text-gray-400 hover:bg-gray-800"
@@ -386,7 +322,7 @@ function Transaction() {
                 </button>
                 <button
                   onClick={() => setFilter("sent")}
-                  className={`px-4 py-2 text-sm ${
+                  className={`px-4 py-2 text-sm transition-colors ${
                     filter === "sent"
                       ? "bg-crypto-blue text-white"
                       : "bg-transparent text-gray-400 hover:bg-gray-800"
@@ -396,7 +332,7 @@ function Transaction() {
                 </button>
                 <button
                   onClick={() => setFilter("received")}
-                  className={`px-4 py-2 text-sm ${
+                  className={`px-4 py-2 text-sm transition-colors ${
                     filter === "received"
                       ? "bg-crypto-blue text-white"
                       : "bg-transparent text-gray-400 hover:bg-gray-800"
@@ -417,63 +353,31 @@ function Transaction() {
             </div>
           </div>
 
-          {/* Advanced Filters (toggleable) */}
+          {/* Advanced Filters (Placeholder) */}
           {showFilters && (
             <div className="mb-6 p-4 bg-gray-900/40 border border-gray-800 rounded-lg animate-fade-in">
               <h3 className="font-medium mb-3">Advanced Filters</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Currency
-                  </label>
-                  <select className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg">
-                    <option value="">All Currencies</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="USDT">Tether (USDT)</option>
-                    <option value="INR">Indian Rupee (INR)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Status
-                  </label>
-                  <select className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg">
-                    <option value="">All Statuses</option>
-                    <option value="completed">Completed</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Date Range
-                  </label>
-                  <select className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg">
-                    <option value="">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="year">This Year</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end mt-4">
-                <Button
-                  variant="outline"
-                  className="mr-2 border-gray-700 text-gray-400 hover:bg-gray-800"
-                >
-                  Reset
-                </Button>
-                <Button className="bg-crypto-blue hover:bg-crypto-blue/90">
-                  Apply Filters
-                </Button>
-              </div>
+              <p className="text-gray-500 text-sm">
+                Advanced filtering options will be available in a future update.
+              </p>
             </div>
           )}
 
           {/* Transactions List */}
-          {filteredTransactions.length > 0 ? (
+
+          {loading ? (
+            <div className="p-12 text-center bg-gray-900/40 border border-gray-800 rounded-lg">
+              <div className="flex justify-center mb-4">
+                <Loader2 className="h-10 w-10 animate-spin text-crypto-blue" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">
+                Fetching transactions...
+              </h3>
+              <p className="text-gray-400">
+                Please wait while we load your history.
+              </p>
+            </div>
+          ) : filteredTransactions.length > 0 ? (
             <div className="space-y-4 mb-8">
               {filteredTransactions.map((tx, index) => (
                 <div
@@ -500,8 +404,8 @@ function Transaction() {
                       <div>
                         <h3 className="font-medium">
                           {tx.type === "send"
-                            ? `Sent to ${tx.recipient}`
-                            : `Received from ${tx.sender}`}
+                            ? `Sent ${tx.currency}`
+                            : `Received ${tx.currency}`}
                         </h3>
                         <p className="text-sm text-gray-400">
                           {formatDate(tx.timestamp)}
@@ -522,10 +426,7 @@ function Transaction() {
                           tx.type === "send" ? "text-red-500" : "text-green-500"
                         }`}
                       >
-                        {tx.type === "send" ? "-" : "+"} ₹
-                        {tx.valueInr.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-400">
+                        {tx.type === "send" ? "-" : "+"}
                         {tx.amount} {tx.currency}
                       </p>
                     </div>
@@ -631,9 +532,6 @@ function Transaction() {
 
               <div>
                 <span className="text-gray-400 text-sm">From</span>
-                <div className="mt-1 flex gap-2 items-center">
-                  <div className="font-medium">{selectedTx.sender}</div>
-                </div>
                 <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
                   {selectedTx.senderAddress}
                 </div>
@@ -641,9 +539,6 @@ function Transaction() {
 
               <div>
                 <span className="text-gray-400 text-sm">To</span>
-                <div className="mt-1 flex gap-2 items-center">
-                  <div className="font-medium">{selectedTx.recipient}</div>
-                </div>
                 <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
                   {selectedTx.recipientAddress}
                 </div>
@@ -652,15 +547,13 @@ function Transaction() {
               <div>
                 <span className="text-gray-400 text-sm">Transaction Hash</span>
                 <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto flex justify-between items-center">
-                  <span>{selectedTx.hash}</span>
+                  <span className="truncate pr-2">{selectedTx.hash}</span>
                   <button
-                    className="p-1 hover:bg-gray-700 rounded-full transition-all duration-300"
+                    className="p-1 hover:bg-gray-700 rounded-full transition-all duration-300 flex-shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       window.open(
-                        selectedTx.category === "crypto"
-                          ? `https://etherscan.io/tx/${selectedTx.hash}`
-                          : `https://upi.trx/${selectedTx.hash}`,
+                        `https://etherscan.io/tx/${selectedTx.hash}`,
                         "_blank"
                       );
                     }}
@@ -679,19 +572,17 @@ function Transaction() {
                 >
                   Close
                 </Button>
-                {selectedTx.category === "crypto" && (
-                  <Button
-                    className="bg-crypto-blue hover:bg-crypto-blue/90"
-                    onClick={() => {
-                      window.open(
-                        `https://etherscan.io/tx/${selectedTx.hash}`,
-                        "_blank"
-                      );
-                    }}
-                  >
-                    View on Explorer <ExternalLink className="ml-1 h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  className="bg-crypto-blue hover:bg-crypto-blue/90"
+                  onClick={() => {
+                    window.open(
+                      `https://etherscan.io/tx/${selectedTx.hash}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  View on Explorer <ExternalLink className="ml-1 h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
