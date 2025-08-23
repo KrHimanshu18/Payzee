@@ -9,6 +9,7 @@ import { LoginContext } from "@/context/LoginContext";
 const SignUp = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { name, email, password, setName, setEmail, setPassword } =
     useContext(LoginContext);
   const url = "http://localhost:8081";
@@ -20,6 +21,7 @@ const SignUp = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await fetch(`${url}/signup`, {
         method: "POST",
@@ -41,6 +43,8 @@ const SignUp = () => {
     } catch (error) {
       console.log(name, email, password);
       toast.error("Signup failed. Try again.");
+    } finally {
+      setLoading(false); // stop loader after request completes
     }
   };
 
@@ -154,9 +158,12 @@ const SignUp = () => {
 
           <Button
             type="submit"
-            className="w-full bg-crypto-green hover:bg-crypto-green/90 text-black py-6"
+            disabled={loading}
+            className={`w-full bg-crypto-blue hover:bg-crypto-blue/90 text-white py-6 ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            Create account
+            {loading ? "Creating..." : "Creating Account"}
           </Button>
         </form>
 

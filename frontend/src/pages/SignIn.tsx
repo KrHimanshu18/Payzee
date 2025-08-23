@@ -11,6 +11,7 @@ const SignIn = () => {
   const { email, password, setName, setEmail, setPassword, setWalletAddress } =
     useContext(LoginContext);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const url = "http://localhost:8081";
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -20,6 +21,7 @@ const SignIn = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await fetch(
         `${url}/login?email=${email}&password=${password}`
@@ -47,6 +49,8 @@ const SignIn = () => {
       }, 1000);
     } catch (error) {
       toast.error("Login failed. Try again.");
+    } finally {
+      setLoading(false); // stop loader after request completes
     }
   };
 
@@ -133,9 +137,12 @@ const SignIn = () => {
 
           <Button
             type="submit"
-            className="w-full bg-crypto-blue hover:bg-crypto-blue/90 text-white py-6"
+            disabled={loading}
+            className={`w-full bg-crypto-blue hover:bg-crypto-blue/90 text-white py-6 ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
