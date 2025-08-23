@@ -288,9 +288,9 @@ export async function getNormalTransactions(
 //   return balances;
 // }
 
-app.post("/getWallet", async (req, res) => {
+app.get("/getWallet", async (req, res) => {
   try {
-    const { address } = req.body;
+    const { address } = req.query;
     if (!address)
       return res.status(400).json({ error: "Wallet address required" });
 

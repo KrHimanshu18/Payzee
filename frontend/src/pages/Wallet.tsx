@@ -25,6 +25,79 @@ import { LoginContext } from "@/context/LoginContext";
 import { isAddress, getAddress, formatEther, BrowserProvider } from "ethers";
 
 // --- Helper Components ---
+const mockWalletDetails = {
+  totalBalance: "125,000",
+  cryptos: [
+    {
+      name: "Bitcoin",
+      symbol: "BTC",
+      amount: "0.05",
+      fiatValue: "75,000",
+      address: "3FZbqi29cpjq2GldwV8eyHuJJnKL1kfZc5",
+      icon: <Bitcoin size={20} className="text-yellow-500" />,
+      color: "from-yellow-500/20 to-yellow-600/10",
+      accentColor: "yellow-500",
+      change: "+3.2%",
+      positive: true,
+    },
+    {
+      name: "Ethereum",
+      symbol: "ETH",
+      amount: "1.2",
+      fiatValue: "40,000",
+      address: "0x71C7656EC7ab88b098defB751B740101B5f6d8976F",
+      icon: <CircleDollarSign size={20} className="text-purple-500" />,
+      color: "from-purple-500/20 to-purple-600/10",
+      accentColor: "purple-500",
+      change: "-1.5%",
+      positive: false,
+    },
+    {
+      name: "Tether",
+      symbol: "USDT",
+      amount: "100",
+      fiatValue: "8,000",
+      address: "TKwLegRSqU9AHDmPCyLGZHTXKZZZZBKDDo",
+      icon: <DollarSign size={20} className="text-green-500" />,
+      color: "from-green-500/20 to-green-600/10",
+      accentColor: "green-500",
+      change: "+0.1%",
+      positive: true,
+    },
+    {
+      name: "Ripple",
+      symbol: "XRP",
+      amount: "500",
+      fiatValue: "2,000",
+      address: "rLW9gnQo7BQhU6igk5keqYnH3TVrCxGRzm",
+      icon: <Coins size={20} className="text-blue-500" />,
+      color: "from-blue-500/20 to-blue-600/10",
+      accentColor: "blue-500",
+      change: "+5.2%",
+      positive: true,
+    },
+  ],
+  recentTransactions: [
+    {
+      type: "send",
+      crypto: "BTC",
+      amount: "0.01",
+      to: "3Hk7... (John)",
+      date: "Oct 28, 2023",
+      status: "completed",
+      icon: <Bitcoin size={16} className="text-yellow-500" />,
+    },
+    {
+      type: "receive",
+      crypto: "ETH",
+      amount: "0.5",
+      from: "0x5e8... (Sara)",
+      date: "Oct 25, 2023",
+      status: "completed",
+      icon: <CircleDollarSign size={16} className="text-purple-500" />,
+    },
+  ],
+};
 
 // Modal for entering wallet address
 const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
@@ -90,81 +163,6 @@ const WalletPage = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
   const url = "http://localhost:8081";
 
-  // --- MOCK DATA ---
-  const mockWalletDetails = {
-    totalBalance: "125,000",
-    cryptos: [
-      {
-        name: "Bitcoin",
-        symbol: "BTC",
-        amount: "0.05",
-        fiatValue: "75,000",
-        address: "3FZbqi29cpjq2GldwV8eyHuJJnKL1kfZc5",
-        icon: <Bitcoin size={20} className="text-yellow-500" />,
-        color: "from-yellow-500/20 to-yellow-600/10",
-        accentColor: "yellow-500",
-        change: "+3.2%",
-        positive: true,
-      },
-      {
-        name: "Ethereum",
-        symbol: "ETH",
-        amount: "1.2",
-        fiatValue: "40,000",
-        address: "0x71C7656EC7ab88b098defB751B740101B5f6d8976F",
-        icon: <CircleDollarSign size={20} className="text-purple-500" />,
-        color: "from-purple-500/20 to-purple-600/10",
-        accentColor: "purple-500",
-        change: "-1.5%",
-        positive: false,
-      },
-      {
-        name: "Tether",
-        symbol: "USDT",
-        amount: "100",
-        fiatValue: "8,000",
-        address: "TKwLegRSqU9AHDmPCyLGZHTXKZZZZBKDDo",
-        icon: <DollarSign size={20} className="text-green-500" />,
-        color: "from-green-500/20 to-green-600/10",
-        accentColor: "green-500",
-        change: "+0.1%",
-        positive: true,
-      },
-      {
-        name: "Ripple",
-        symbol: "XRP",
-        amount: "500",
-        fiatValue: "2,000",
-        address: "rLW9gnQo7BQhU6igk5keqYnH3TVrCxGRzm",
-        icon: <Coins size={20} className="text-blue-500" />,
-        color: "from-blue-500/20 to-blue-600/10",
-        accentColor: "blue-500",
-        change: "+5.2%",
-        positive: true,
-      },
-    ],
-    recentTransactions: [
-      {
-        type: "send",
-        crypto: "BTC",
-        amount: "0.01",
-        to: "3Hk7... (John)",
-        date: "Oct 28, 2023",
-        status: "completed",
-        icon: <Bitcoin size={16} className="text-yellow-500" />,
-      },
-      {
-        type: "receive",
-        crypto: "ETH",
-        amount: "0.5",
-        from: "0x5e8... (Sara)",
-        date: "Oct 25, 2023",
-        status: "completed",
-        icon: <CircleDollarSign size={16} className="text-purple-500" />,
-      },
-    ],
-  };
-  // --- END MOCK DATA ---
   const updateWalletAddressOnBackend = async (name, address) => {
     toast.info("Saving your wallet address...", { id: "set-address" });
     try {
@@ -180,7 +178,6 @@ const WalletPage = () => {
         toast.error(data.message);
         return;
       }
-      // Wallet address: 0x7F5E85B85CF88cFcEe9613368636F45B880e62CB
 
       console.log("Backend response:", data);
 
@@ -197,33 +194,40 @@ const WalletPage = () => {
     }
   };
 
-  const fetchWalletDetails = async (address) => {
+  const fetchWalletDetails = async (address: string) => {
     setIsLoading(true);
     toast.info("Fetching wallet details...", { id: "fetch-wallet" });
 
     try {
-      // if (!isAddress(address)) throw new Error("Invalid address");
+      console.log("Name: " + name);
+      console.log("Address: " + address);
+      const response = await fetch(`${url}/getWallet?address=${address}`, {
+        method: "GET",
+      });
+      if (!response.ok) throw new Error("Failed to fetch wallet data");
 
-      // const checksummedAddress = getAddress(address);
+      const data = await response.json();
+      console.log(data);
+      // Convert balance values to numbers before summing
+      const totalBalance = Object.values(data.balances)
+        .map((val) => parseFloat(val as string) || 0)
+        .reduce((acc, val) => acc + val, 0);
 
-      // const provider = new BrowserProvider(window.ethereum);
-      // const balance = await provider.getBalance(checksummedAddress);
-      // console.log(formatEther(balance));
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
       setWalletData({
         ...mockWalletDetails,
-        // walletAddress: checksummedAddress,
-        walletAddress: address,
+        walletAddress: data.walletAddress,
+        balances: data.balances,
+        lastTransactions: data.lastTransactions,
+        totalBalance: totalBalance.toFixed(10),
       });
 
       toast.success("Wallet details loaded!", { id: "fetch-wallet" });
     } catch (err) {
-      toast.error("Invalid wallet address");
+      toast.error("Invalid wallet address", { id: "fetch-wallet" });
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -504,152 +508,6 @@ const WalletPage = () => {
                   </div>
                   <div className="bg-gradient-to-r from-purple-500/60 to-white/5 h-1 w-full mt-auto transition-all duration-500 group-hover:from-purple-500/80"></div>
                 </div>
-              </div>
-
-              {/* Cryptocurrencies Section */}
-              <h2 className="text-2xl font-bold mb-6 mt-12 text-white/90 flex items-center">
-                <span className="relative">
-                  Cryptocurrencies
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-[#33C3F0] to-transparent"></span>
-                </span>
-                <span className="text-sm ml-4 text-gray-400 font-normal">
-                  {walletData.cryptos.length} assets
-                </span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {walletData.cryptos.map((crypto, index) => (
-                  <div
-                    key={index}
-                    className="transform transition-all duration-500 relative"
-                    style={{
-                      transform:
-                        expandedCard === index ? "scale(1.03)" : "scale(1)",
-                      zIndex: expandedCard === index ? 20 : 10,
-                    }}
-                    onMouseEnter={() => setHoveredCard(index)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                  >
-                    <div
-                      className={cn(
-                        "crypto-card relative overflow-hidden backdrop-blur-md bg-black/20 border border-white/10 shadow-xl rounded-2xl transition-all duration-500",
-                        hoveredCard === index && "border-white/20 shadow-2xl"
-                      )}
-                    >
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${crypto.color} pointer-events-none opacity-30`}
-                      ></div>
-                      <div
-                        className={`absolute -right-8 -top-8 w-24 h-24 bg-${crypto.accentColor}/30 rounded-full blur-[24px] transition-all duration-500`}
-                      ></div>
-
-                      <div className="flex items-center justify-between mb-4 relative z-10 p-5">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`h-12 w-12 rounded-full bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center backdrop-blur-md border border-${crypto.accentColor}/30`}
-                          >
-                            {crypto.icon}
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-white">
-                              {crypto.name}
-                            </h3>
-                            <p className="text-sm text-gray-400">
-                              {crypto.symbol}
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            crypto.positive
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {crypto.change}
-                        </div>
-                      </div>
-
-                      <div className="mb-4 relative z-10 px-5">
-                        <p className="text-gray-400 text-sm mb-1">Balance</p>
-                        <div className="flex items-baseline">
-                          <span
-                            className={cn(
-                              "font-bold mr-2",
-                              crypto.amount.length > 6 ? "text-xl" : "text-2xl"
-                            )}
-                          >
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-gray-300">
-                              {crypto.amount} {crypto.symbol}
-                            </span>
-                          </span>
-                          <span className="text-gray-400 text-sm">
-                            ≈ ₹{crypto.fiatValue}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Collapsible Section */}
-                      <div
-                        className={cn(
-                          "transition-all duration-500 overflow-hidden",
-                          expandedCard === index
-                            ? "max-h-[200px] opacity-100"
-                            : "max-h-0 opacity-0"
-                        )}
-                      >
-                        <div className="px-5 mb-4 relative z-10">
-                          <p className="text-gray-400 text-sm mb-1">Address</p>
-                          <div className="relative">
-                            <div className="crypto-address flex justify-between items-center bg-black/40 backdrop-blur-sm border border-gray-800/50 p-3 rounded-md">
-                              <span className="truncate pr-2 text-sm font-mono text-gray-300">
-                                {crypto.address}
-                              </span>
-                              <button
-                                onClick={() => copyAddress(crypto.address)}
-                                className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-full"
-                              >
-                                <Copy size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-4 mb-4 relative z-10 px-5">
-                        <Button
-                          className={`wallet-action-button bg-gradient-to-r from-${crypto.accentColor} to-${crypto.accentColor}/70 hover:opacity-90 transition-all duration-300 shadow-lg shadow-${crypto.accentColor}/20`}
-                        >
-                          Send
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="wallet-action-button border-gray-700/50 bg-black/20 hover:bg-black/40 transition-all duration-300"
-                        >
-                          Receive
-                        </Button>
-                      </div>
-
-                      <button
-                        onClick={() => toggleCardExpand(index)}
-                        className="w-full flex items-center justify-center py-2 text-sm text-gray-400 hover:text-white transition-colors relative z-10 border-t border-white/5 hover:bg-white/5"
-                      >
-                        {expandedCard === index ? (
-                          <>
-                            <ChevronUp size={16} className="mr-1" /> Less
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown size={16} className="mr-1" /> More
-                          </>
-                        )}
-                      </button>
-
-                      <div
-                        className={`bg-gradient-to-r from-${crypto.accentColor}/60 to-white/5 h-1 w-full mt-auto transition-all duration-500`}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
               </div>
 
               {/* Recent Activity Section */}
