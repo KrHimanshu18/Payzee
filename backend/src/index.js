@@ -285,14 +285,17 @@ app.get("/getWallet", async (req, res) => {
       return res.status(400).json({ error: "Invalid wallet address" });
     }
 
+    // Fetch balances first
     const balances = await getChainBalances(normalizedAddress);
-    // const tokens = await getWalletBalances(normalizedAddress);
+
+    // Wait 1 second before fetching transactions
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const lastTransactions = await getNormalTransactions(normalizedAddress);
 
     res.json({
       walletAddress: normalizedAddress,
       balances,
-      // tokens,
       lastTransactions,
     });
   } catch (error) {
