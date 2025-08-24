@@ -200,7 +200,7 @@ app.post("/updateWalletAddress", async (req, res) => {
 
 async function getChainBalances(address) {
   const chains = [1, 42161, 8453, 10, 137];
-  const apiKey = process.env.MULTICHAIN_API_KEY;
+  const apiKey = process.env.BALANCE_KEY;
   let balances = {};
 
   for (const chain of chains) {
@@ -224,71 +224,71 @@ async function getChainBalances(address) {
   return balances;
 }
 
-export async function getTokens(address) {
-  const chains = [1, 42161, 8453, 10, 137]; // Ethereum, Arbitrum, Base, Optimism, Polygon
-  const apiKey = process.env.MULTICHAIN_API_KEY;
-  let allTokens = {};
+// export async function getTokens(address) {
+//   const chains = [1, 42161, 8453, 10, 137]; // Ethereum, Arbitrum, Base, Optimism, Polygon
+//   const apiKey = process.env._MULTICHAINAPI_KEY;
+//   let allTokens = {};
 
-  for (const chain of chains) {
-    try {
-      console.log(`\n=== Fetching token transactions for chain ${chain} ===`);
+//   for (const chain of chains) {
+//     try {
+//       console.log(`\n=== Fetching token transactions for chain ${chain} ===`);
 
-      const url = `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
-      console.log("URL:", url);
+//       const url = `https://api.etherscan.io/v2/api?chainid=${chain}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
+//       console.log("URL:", url);
 
-      const resp = await axios.get(url);
-      const data = resp.data;
-      console.log("Full token tx response:", JSON.stringify(data, null, 2));
+//       const resp = await axios.get(url);
+//       const data = resp.data;
+//       console.log("Full token tx response:", JSON.stringify(data, null, 2));
 
-      if (!Array.isArray(data?.result)) {
-        allTokens[chain] = {};
-        continue;
-      }
+//       if (!Array.isArray(data?.result)) {
+//         allTokens[chain] = {};
+//         continue;
+//       }
 
-      const tokens = {};
+//       const tokens = {};
 
-      for (const tx of data.result) {
-        if (!tx?.tokenSymbol || !tx?.tokenDecimal) continue;
-        const symbol = tx.tokenSymbol;
-        const value = ethers.BigNumber.from(tx.value);
+//       for (const tx of data.result) {
+//         if (!tx?.tokenSymbol || !tx?.tokenDecimal) continue;
+//         const symbol = tx.tokenSymbol;
+//         const value = ethers.BigNumber.from(tx.value);
 
-        if (!tokens[symbol]) tokens[symbol] = ethers.BigNumber.from(0);
+//         if (!tokens[symbol]) tokens[symbol] = ethers.BigNumber.from(0);
 
-        if (tx.to?.toLowerCase() === address.toLowerCase()) {
-          tokens[symbol] = tokens[symbol].add(value);
-        }
-        if (tx.from?.toLowerCase() === address.toLowerCase()) {
-          tokens[symbol] = tokens[symbol].sub(value);
-        }
-      }
+//         if (tx.to?.toLowerCase() === address.toLowerCase()) {
+//           tokens[symbol] = tokens[symbol].add(value);
+//         }
+//         if (tx.from?.toLowerCase() === address.toLowerCase()) {
+//           tokens[symbol] = tokens[symbol].sub(value);
+//         }
+//       }
 
-      // Convert BigNumbers to human-readable format
-      for (const symbol in tokens) {
-        const decimals = parseInt(
-          data.result.find((t) => t.tokenSymbol === symbol)?.tokenDecimal ||
-            "18"
-        );
-        tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
-      }
+//       // Convert BigNumbers to human-readable format
+//       for (const symbol in tokens) {
+//         const decimals = parseInt(
+//           data.result.find((t) => t.tokenSymbol === symbol)?.tokenDecimal ||
+//             "18"
+//         );
+//         tokens[symbol] = ethers.formatUnits(tokens[symbol], decimals);
+//       }
 
-      allTokens[chain] = tokens;
-    } catch (err) {
-      console.error(`Error fetching tokens for chain ${chain}:`, err.message);
-      allTokens[chain] = {};
-    }
+//       allTokens[chain] = tokens;
+//     } catch (err) {
+//       console.error(`Error fetching tokens for chain ${chain}:`, err.message);
+//       allTokens[chain] = {};
+//     }
 
-    // Small delay to avoid rate limits
-    await new Promise((res) => setTimeout(res, 500));
-  }
+//     // Small delay to avoid rate limits
+//     await new Promise((res) => setTimeout(res, 500));
+//   }
 
-  return allTokens;
-}
+//   return allTokens;
+// }
 
 export async function getNormalTransactions(
   address,
   chains = [1, 42161, 8453, 10, 137]
 ) {
-  const apiKey = process.env.MULTICHAIN_API_KEY;
+  const apiKey = process.env.TRANSACTION_KEY;
   const allTxs = {};
 
   for (const chain of chains) {
