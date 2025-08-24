@@ -12,7 +12,7 @@ const SignIn = () => {
     useContext(LoginContext);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const url = "http://localhost:8081";
+  const url = "https://payzee.onrender.com";
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -161,7 +161,7 @@ const WalletPage = () => {
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
   const [expandedCard, setExpandedCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
-  const url = "http://localhost:8081";
+  const url = "https://payzee.onrender.com";
 
   const updateWalletAddressOnBackend = async (name, address) => {
     toast.info("Saving your wallet address...", { id: "set-address" });

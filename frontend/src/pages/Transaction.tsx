@@ -35,6 +35,7 @@ function Transaction() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const url = "https://payzee.onrender.com";
 
   useEffect(() => {
     if (!name) navigate("/");
@@ -54,9 +55,7 @@ function Transaction() {
         }
 
         // --- UPDATED: URL now matches the WalletPage component ---
-        const res = await fetch(
-          `http://localhost:8081/getWallet?address=${address}`
-        );
+        const res = await fetch(`${url}/getWallet?address=${address}`);
         if (!res.ok) throw new Error("Failed to fetch wallet data");
 
         const data = await res.json();
