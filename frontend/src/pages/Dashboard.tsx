@@ -18,6 +18,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useLocation } from "react-router-dom";
 import { LoginContext } from "@/context/LoginContext";
 import CryptoGrid from "@/pages/CryptoGrid";
+import scan from "../assets/Scan.jpg";
+import crypto from "../assets/Crypto.jpg";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -221,7 +223,7 @@ const Dashboard = () => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-crypto-blue to-crypto-purple rounded-3xl blur-lg opacity-30"></div>
                         <div className="relative rounded-3xl overflow-hidden border-4 border-white/10 bg-crypto-dark shadow-lg">
                           <img
-                            src="\src\assets\Scan.jpg"
+                            src={scan}
                             alt="Payzee App"
                             className="w-full h-auto"
                           />
@@ -415,7 +417,7 @@ const Dashboard = () => {
                   <div className="relative">
                     <div className="absolute inset-0 bg-glow-blue rounded-full filter blur-xl opacity-70"></div>
                     <img
-                      src="\src\assets\Crypto.jpg"
+                      src={crypto}
                       alt="Mobile App"
                       className="relative z-10 w-60 h-auto rounded-2xl border-4 border-white/10 shadow-lg"
                     />
