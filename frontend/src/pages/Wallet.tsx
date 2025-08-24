@@ -24,81 +24,6 @@ import { useContext, useState, useEffect } from "react";
 import { LoginContext } from "@/context/LoginContext";
 import { isAddress, getAddress, formatEther, BrowserProvider } from "ethers";
 
-// --- Helper Components ---
-const mockWalletDetails = {
-  totalBalance: "125,000",
-  cryptos: [
-    {
-      name: "Bitcoin",
-      symbol: "BTC",
-      amount: "0.05",
-      fiatValue: "75,000",
-      address: "3FZbqi29cpjq2GldwV8eyHuJJnKL1kfZc5",
-      icon: <Bitcoin size={20} className="text-yellow-500" />,
-      color: "from-yellow-500/20 to-yellow-600/10",
-      accentColor: "yellow-500",
-      change: "+3.2%",
-      positive: true,
-    },
-    {
-      name: "Ethereum",
-      symbol: "ETH",
-      amount: "1.2",
-      fiatValue: "40,000",
-      address: "0x71C7656EC7ab88b098defB751B740101B5f6d8976F",
-      icon: <CircleDollarSign size={20} className="text-purple-500" />,
-      color: "from-purple-500/20 to-purple-600/10",
-      accentColor: "purple-500",
-      change: "-1.5%",
-      positive: false,
-    },
-    {
-      name: "Tether",
-      symbol: "USDT",
-      amount: "100",
-      fiatValue: "8,000",
-      address: "TKwLegRSqU9AHDmPCyLGZHTXKZZZZBKDDo",
-      icon: <DollarSign size={20} className="text-green-500" />,
-      color: "from-green-500/20 to-green-600/10",
-      accentColor: "green-500",
-      change: "+0.1%",
-      positive: true,
-    },
-    {
-      name: "Ripple",
-      symbol: "XRP",
-      amount: "500",
-      fiatValue: "2,000",
-      address: "rLW9gnQo7BQhU6igk5keqYnH3TVrCxGRzm",
-      icon: <Coins size={20} className="text-blue-500" />,
-      color: "from-blue-500/20 to-blue-600/10",
-      accentColor: "blue-500",
-      change: "+5.2%",
-      positive: true,
-    },
-  ],
-  recentTransactions: [
-    {
-      type: "send",
-      crypto: "BTC",
-      amount: "0.01",
-      to: "3Hk7... (John)",
-      date: "Oct 28, 2023",
-      status: "completed",
-      icon: <Bitcoin size={16} className="text-yellow-500" />,
-    },
-    {
-      type: "receive",
-      crypto: "ETH",
-      amount: "0.5",
-      from: "0x5e8... (Sara)",
-      date: "Oct 25, 2023",
-      status: "completed",
-      icon: <CircleDollarSign size={16} className="text-purple-500" />,
-    },
-  ],
-};
-
 // Modal for entering wallet address
 const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
   const [address, setAddress] = useState("");
@@ -230,7 +155,6 @@ const WalletPage = () => {
         }));
 
       setWalletData({
-        ...mockWalletDetails,
         walletAddress: data.walletAddress,
         balances: data.balances,
         lastTransactions: data.lastTransactions, // keep raw
