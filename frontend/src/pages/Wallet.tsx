@@ -20,17 +20,31 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useContext, useState, useEffect } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  Suspense,
+  lazy,
+} from "react";
 import { LoginContext } from "@/context/LoginContext";
-import { isAddress, getAddress, formatEther, BrowserProvider } from "ethers";
+
+// Lazy load ethers to optimize bundle
+const ethersPromise = import("ethers");
 
 // Modal for entering wallet address
-const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
+const WalletAddressModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (address: string) => void;
+}> = ({ isOpen, onClose, onSubmit }) => {
   const [address, setAddress] = useState("");
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (address.trim()) {
       onSubmit(address);
@@ -40,22 +54,35 @@ const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wallet-modal-title"
+    >
       <div className="bg-gradient-to-br from-[#1A1F2C] to-[#131722] border border-white/10 rounded-2xl shadow-2xl w-full max-w-md m-4 p-8 relative animate-fade-in-up">
         <button
           onClick={onClose}
+          aria-label="Close wallet address modal"
           className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
         >
-          <X size={20} />
+          <X size={20} aria-hidden="true" />
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-white">
+        <h2
+          id="wallet-modal-title"
+          className="text-2xl font-bold mb-4 text-white"
+        >
           Enter Your Wallet Address
         </h2>
         <p className="text-gray-400 mb-6">
           To view your assets, please provide your public wallet address.
         </p>
         <form onSubmit={handleSubmit}>
+          <label htmlFor="wallet-address" className="sr-only">
+            Wallet Address
+          </label>
           <input
+            id="wallet-address"
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -75,101 +102,100 @@ const WalletAddressModal = ({ isOpen, onClose, onSubmit }) => {
 };
 
 // --- Main Wallet Page Component ---
-
-const WalletPage = () => {
+const WalletPage: React.FC = () => {
   const navigate = useNavigate();
   const { name, email, walletAddress, setWalletAddress } =
     useContext(LoginContext);
 
-  const [walletData, setWalletData] = useState(null);
+  const [walletData, setWalletData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
-  const [expandedCard, setExpandedCard] = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
+
   const url = "https://payzee.onrender.com";
+  const currency = "₹";
 
-  const updateWalletAddressOnBackend = async (name, address) => {
-    toast.info("Saving your wallet address...", { id: "set-address" });
-    try {
-      console.log(address);
-      const res = await fetch(`${url}/updateWalletAddress`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, walletAddress: address }),
-      });
-      const data = await res.json();
+  const updateWalletAddressOnBackend = useCallback(
+    async (name: string, address: string) => {
+      toast.info("Saving your wallet address...", { id: "set-address" });
+      try {
+        const res = await fetch(`${url}/updateWalletAddress`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, walletAddress: address }),
+        });
+        const data = await res.json();
 
-      if (!res.ok) {
-        toast.error(data.message);
-        return;
+        if (!res.ok) {
+          toast.error(data.message);
+          return false;
+        }
+
+        toast.success("Wallet address saved successfully!", {
+          id: "set-address",
+        });
+        return true;
+      } catch (error) {
+        console.error("Failed to set wallet address:", error);
+        toast.error("Could not save wallet address. Please try again.", {
+          id: "set-address",
+        });
+        return false;
       }
+    },
+    [email, url]
+  );
 
-      console.log("Backend response:", data);
+  const fetchWalletDetails = useCallback(
+    async (address: string) => {
+      setIsLoading(true);
+      toast.info("Fetching wallet details...", { id: "fetch-wallet" });
 
-      toast.success("Wallet address saved successfully!", {
-        id: "set-address",
-      });
-      return true;
-    } catch (error) {
-      console.error("Failed to set wallet address:", error);
-      toast.error("Could not save wallet address. Please try again.", {
-        id: "set-address",
-      });
-      return false;
-    }
-  };
+      try {
+        const response = await fetch(`${url}/getWallet?address=${address}`, {
+          method: "GET",
+        });
+        if (!response.ok) throw new Error("Failed to fetch wallet data");
 
-  const fetchWalletDetails = async (address: string) => {
-    setIsLoading(true);
-    toast.info("Fetching wallet details...", { id: "fetch-wallet" });
+        const data = await response.json();
 
-    try {
-      const response = await fetch(`${url}/getWallet?address=${address}`, {
-        method: "GET",
-      });
-      if (!response.ok) throw new Error("Failed to fetch wallet data");
+        const totalBalance = Object.values(data.balances)
+          .map((val) => parseFloat(val as string) || 0)
+          .reduce((acc, val) => acc + val, 0);
 
-      const data = await response.json();
-      console.log(data);
+        const combinedTxs = Object.values(data.lastTransactions || {})
+          .flat()
+          .map((tx: any) => ({
+            type:
+              tx.from?.toLowerCase() === address.toLowerCase()
+                ? "send"
+                : "receive",
+            crypto: tx.symbol || "ETH",
+            amount: tx.valueETH || "0",
+            from: tx.from,
+            to: tx.to,
+            date: new Date(Number(tx.timeStamp) * 1000).toLocaleDateString(),
+            status: "completed",
+            icon: <CircleDollarSign size={16} className="text-purple-500" />,
+          }));
 
-      // Calculate total balance
-      const totalBalance = Object.values(data.balances)
-        .map((val) => parseFloat(val as string) || 0)
-        .reduce((acc, val) => acc + val, 0);
+        setWalletData({
+          walletAddress: data.walletAddress,
+          balances: data.balances,
+          lastTransactions: data.lastTransactions,
+          recentTransactions: combinedTxs,
+          totalBalance: totalBalance.toFixed(10),
+        });
 
-      // 🔥 Convert lastTransactions (all chains) into a single recentTransactions array
-      const combinedTxs = Object.values(data.lastTransactions || {})
-        .flat()
-        .map((tx: any) => ({
-          type:
-            tx.from?.toLowerCase() === address.toLowerCase()
-              ? "send"
-              : "receive",
-          crypto: tx.symbol || "ETH", // default if missing
-          amount: tx.valueETH || "0",
-          from: tx.from,
-          to: tx.to,
-          date: new Date(Number(tx.timeStamp) * 1000).toLocaleDateString(),
-          status: "completed",
-          icon: <CircleDollarSign size={16} className="text-purple-500" />, // you can swap per symbol
-        }));
-
-      setWalletData({
-        walletAddress: data.walletAddress,
-        balances: data.balances,
-        lastTransactions: data.lastTransactions, // keep raw
-        recentTransactions: combinedTxs, // 👈 use this in UI
-        totalBalance: totalBalance.toFixed(10),
-      });
-
-      toast.success("Wallet details loaded!", { id: "fetch-wallet" });
-    } catch (err) {
-      toast.error("Invalid wallet address", { id: "fetch-wallet" });
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        toast.success("Wallet details loaded!", { id: "fetch-wallet" });
+      } catch (err) {
+        toast.error("Invalid wallet address", { id: "fetch-wallet" });
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [url]
+  );
 
   useEffect(() => {
     if (!name) {
@@ -181,42 +207,40 @@ const WalletPage = () => {
       setIsLoading(false);
       setAddressModalOpen(true);
     }
-  }, [walletAddress, navigate]);
+  }, [name, walletAddress, navigate, fetchWalletDetails]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     toast.success("Logged out successfully");
-    // In a real app, we would handle actual logout logic here
-  };
+  }, []);
 
-  const handleModalSubmit = async (newAddress) => {
-    const isSuccess = await updateWalletAddressOnBackend(name, newAddress);
+  const handleModalSubmit = useCallback(
+    async (newAddress: string) => {
+      const isSuccess = await updateWalletAddressOnBackend(name, newAddress);
+      if (isSuccess) {
+        setWalletAddress(newAddress);
+        fetchWalletDetails(newAddress);
+        setAddressModalOpen(false);
+      }
+    },
+    [fetchWalletDetails, updateWalletAddressOnBackend, name, setWalletAddress]
+  );
 
-    if (isSuccess) {
-      setWalletAddress(newAddress); // Update context
-      fetchWalletDetails(newAddress);
-      setAddressModalOpen(false); // Close modal
-    }
-  };
-
-  const copyAddress = (address) => {
+  const copyAddress = useCallback((address: string) => {
     navigator.clipboard.writeText(address);
     toast.success("Address copied to clipboard");
-  };
+  }, []);
 
-  const showQRCode = () => {
+  const showQRCode = useCallback(() => {
     toast.info("QR Code functionality will be implemented soon", {
       description: "This feature is coming in a future update.",
     });
-  };
+  }, []);
 
-  const toggleCardExpand = (index) => {
-    setExpandedCard(expandedCard === index ? null : index);
-  };
-
-  const getRandomAnimationDelay = () => `${Math.random() * 5}s`;
-  const getRandomPosition = () => `${Math.random() * 100}%`;
-
-  const currency = "₹";
+  const getRandomAnimationDelay = useCallback(
+    () => `${Math.random() * 5}s`,
+    []
+  );
+  const getRandomPosition = useCallback(() => `${Math.random() * 100}%`, []);
 
   return (
     <>
@@ -227,7 +251,7 @@ const WalletPage = () => {
       />
       <div className="min-h-screen flex flex-col relative bg-gradient-to-b from-[#131722] via-[#1A1F2C] to-[#131722] overflow-hidden">
         {/* Background Effects */}
-        <div className="fixed inset-0 z-0 overflow-hidden">
+        <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
