@@ -34,7 +34,7 @@ const Footer = () => {
                   <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">ZollPay</span>
+              <span className="text-xl font-bold">Payzee</span>
             </div>
             <p className="text-gray-400">
               Bridging the gap between cryptocurrency and everyday UPI payments
@@ -174,7 +174,7 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-crypto-blue" />
-                <span className="text-gray-400">support@ZollPay.com</span>
+                <span className="text-gray-400">support@Payzee.com</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-crypto-blue" />
@@ -202,7 +202,7 @@ const Footer = () => {
         <div className="border-t border-white/10 pt-8 mt-12">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2023 ZollPay. All rights reserved.
+              © 2023 Payzee. All rights reserved.
             </div>
             <div className="flex space-x-6">
               <a href="#" className="text-gray-400 hover:text-white text-sm">
