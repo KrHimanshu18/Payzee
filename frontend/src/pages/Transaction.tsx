@@ -1,7 +1,13 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useMemo,
+  Suspense,
+} from "react";
 import {
-  Home,
   Scan,
   Wallet,
   History,
@@ -13,18 +19,36 @@ import {
   LogOut,
   Loader2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { LoginContext } from "@/context/LoginContext";
+
+// ✅ Lazy loaded heavy components
+const Button = React.lazy(() =>
+  import("@/components/ui/button").then((m) => ({ default: m.Button }))
+);
+
+const Dialog = React.lazy(() =>
+  import("@/components/ui/dialog").then((m) => ({ default: m.Dialog }))
+);
+
+const DialogTitle = React.lazy(() =>
+  import("@/components/ui/dialog").then((m) => ({ default: m.DialogTitle }))
+);
+
+const DialogContent = React.lazy(() =>
+  import("@/components/ui/dialog").then((m) => ({ default: m.DialogContent }))
+);
+
+const DialogHeader = React.lazy(() =>
+  import("@/components/ui/dialog").then((m) => ({ default: m.DialogHeader }))
+);
+
+const DialogDescription = React.lazy(() =>
+  import("@/components/ui/dialog").then((m) => ({
+    default: m.DialogDescription,
+  }))
+);
 
 function Transaction() {
   const navigate = useNavigate();
@@ -37,37 +61,35 @@ function Transaction() {
   const [loading, setLoading] = useState(true);
   const url = "https://payzee.onrender.com";
 
+  // ✅ Redirect if no user
   useEffect(() => {
     if (!name) navigate("/");
   }, [navigate, name]);
 
-  // ✅ Fetch real transactions from backend
+  // ✅ Fetch transactions
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        const address = walletAddress;
-        if (!address) {
-          toast.error(
-            "Wallet address not found. Please connect your wallet first."
-          );
+        if (!walletAddress) {
+          toast.error("Wallet address not found. Please connect your wallet.");
           return;
         }
 
-        // --- UPDATED: URL now matches the WalletPage component ---
-        const res = await fetch(`${url}/getWallet?address=${address}`);
+        const res = await fetch(`${url}/getWallet?address=${walletAddress}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error("Failed to fetch wallet data");
 
         const data = await res.json();
-
-        // Flatten the lastTransactions object which contains arrays of transactions from different chains
         const allTxs = Object.values(data.lastTransactions || {}).flat();
 
-        // Map the raw transaction data to a structured format for the UI
         const mapped = allTxs.map((tx: any, idx: number) => ({
           id: `tx-${idx}`,
           type:
-            tx.from?.toLowerCase() === address.toLowerCase()
+            tx.from?.toLowerCase() === walletAddress.toLowerCase()
               ? "send"
               : "receive",
           amount: parseFloat(tx.valueETH || "0"),
@@ -76,37 +98,40 @@ function Transaction() {
           recipientAddress: tx.to || "",
           sender: tx.from || "Unknown",
           senderAddress: tx.from || "",
-          status: "completed", // Assuming all fetched txs are completed
+          status: "completed",
           timestamp: new Date(Number(tx.timeStamp) * 1000).toISOString(),
           hash: tx.hash,
-          fee: 0, // Fee data would need to be provided by the backend
-          valueInr: parseFloat(tx.valueInr || "0"), // Assuming backend provides this conversion
+          fee: 0,
+          valueInr: parseFloat(tx.valueInr || "0"),
           category: "crypto",
         }));
 
         setTransactions(mapped);
-      } catch (err) {
-        console.error("Error fetching transactions", err);
-        toast.error("Could not fetch transaction history.");
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Error fetching transactions", err);
+          toast.error("Could not fetch transaction history.");
+        }
       } finally {
-        setLoading(false); // stop loader
+        setLoading(false);
       }
     };
 
     fetchTransactions();
-  }, []);
+    return () => controller.abort();
+  }, [walletAddress]);
 
-  // --- helpers ---
-  const allCount = transactions.length;
-  const sentCount = transactions.filter((tx) => tx.type === "send").length;
-  const receivedCount = transactions.filter(
-    (tx) => tx.type === "receive"
-  ).length;
-  const pendingCount = transactions.filter(
-    (tx) => tx.status === "pending"
-  ).length;
+  // ✅ Memoized helpers
+  const counts = useMemo(() => {
+    return {
+      all: transactions.length,
+      sent: transactions.filter((tx) => tx.type === "send").length,
+      received: transactions.filter((tx) => tx.type === "receive").length,
+      pending: transactions.filter((tx) => tx.status === "pending").length,
+    };
+  }, [transactions]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case "completed":
         return "bg-green-500 text-white";
@@ -117,49 +142,53 @@ function Transaction() {
       default:
         return "bg-gray-500 text-white";
     }
-  };
+  }, []);
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleString("en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
+  const formatDate = useCallback(
+    (dateString: string) =>
+      new Date(dateString).toLocaleString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      }),
+    []
+  );
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      if (
+        filter !== "all" &&
+        ((filter === "sent" && tx.type !== "send") ||
+          (filter === "received" && tx.type !== "receive"))
+      ) {
+        return false;
+      }
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          tx.currency.toLowerCase().includes(query) ||
+          tx.recipient.toLowerCase().includes(query) ||
+          tx.sender.toLowerCase().includes(query) ||
+          tx.status.toLowerCase().includes(query) ||
+          tx.hash.toLowerCase().includes(query)
+        );
+      }
+      return true;
     });
+  }, [transactions, filter, searchQuery]);
 
-  const filteredTransactions = transactions.filter((tx) => {
-    if (
-      filter !== "all" &&
-      ((filter === "sent" && tx.type !== "send") ||
-        (filter === "received" && tx.type !== "receive"))
-    ) {
-      return false;
-    }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        tx.currency.toLowerCase().includes(query) ||
-        tx.recipient.toLowerCase().includes(query) ||
-        tx.sender.toLowerCase().includes(query) ||
-        tx.status.toLowerCase().includes(query) ||
-        tx.hash.toLowerCase().includes(query)
-      );
-    }
-    return true;
-  });
-
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     toast.success("Logged out successfully");
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-[#070b16] text-white overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 z-0 opacity-30">
+      {/* Background */}
+      <div className="fixed inset-0 z-0 opacity-30" aria-hidden="true">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
-        {/* Stars */}
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={i}
@@ -176,30 +205,39 @@ function Transaction() {
       {/* Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/20 border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="crypto-icon blue-glow">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-crypto-blue"
-                >
-                  <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
-                  <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
-                </svg>
-              </div>
-              <span className="text-xl font-bold">Payzee</span>
-            </Link>
-          </div>
+          {/* Brand */}
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2"
+            aria-label="Go to Dashboard"
+          >
+            <div className="crypto-icon blue-glow">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                role="img"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-crypto-blue"
+              >
+                <path d="M11.767 19.089c4.924.868 6.14-6.025 1.216-6.894m-1.216 6.894L5.86 18.047m5.908 1.042-.347 1.97m1.563-8.864c4.924.869 6.14-6.025 1.215-6.893m-1.215 6.893-3.94-.694m5.16-6.2L12.19 4.2" />
+                <path d="M7.48 20.364c3.42.602 4.261-4.182.842-4.784m-3.756 5.344 2.914.512m-2.914-.512c-2.235-.394-2.792-3.016-.556-3.41" />
+              </svg>
+            </div>
+            <span className="text-xl font-bold">Payzee</span>
+          </Link>
 
-          <div className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10">
+          {/* Menu */}
+          <nav
+            className="hidden md:flex items-center gap-8 px-6 py-3 backdrop-blur-md bg-white/5 rounded-full border border-white/10"
+            aria-label="Main Navigation"
+          >
             <Link
               to="/dashboard"
               className="flex items-center gap-1 text-white"
@@ -210,25 +248,26 @@ function Transaction() {
               to="/scanpay"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
-              <Scan size={18} />
+              <Scan size={18} aria-hidden="true" />
               <span>Scan & Pay</span>
             </Link>
             <Link
               to="/wallet"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
-              <Wallet size={18} />
+              <Wallet size={18} aria-hidden="true" />
               <span>Wallet</span>
             </Link>
             <Link
               to="/transaction"
               className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors"
             >
-              <History size={18} />
+              <History size={18} aria-hidden="true" />
               <span>History</span>
             </Link>
-          </div>
+          </nav>
 
+          {/* User */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
               <div className="w-8 h-8 rounded-full bg-crypto-blue flex items-center justify-center text-white font-medium">
@@ -236,16 +275,20 @@ function Transaction() {
               </div>
               <span>{name || "User"}</span>
             </div>
-            <Link to="/" onClick={handleLogout}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/10"
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </Button>
-            </Link>
+
+            <Suspense fallback={null}>
+              <Link to="/" onClick={handleLogout}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/10"
+                  aria-label="Logout"
+                >
+                  <LogOut size={16} aria-hidden="true" />
+                  <span>Logout</span>
+                </Button>
+              </Link>
+            </Suspense>
           </div>
         </div>
       </header>
@@ -265,28 +308,28 @@ function Transaction() {
                     <History size={20} className="text-white" />
                   </div>
                   <p className="text-gray-400 text-sm">All Transactions</p>
-                  <p className="text-2xl font-bold">{allCount}</p>
+                  <p className="text-2xl font-bold">{counts.all}</p>
                 </div>
                 <div className="p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20 mb-2">
                     <ArrowUpRight size={20} className="text-red-500" />
                   </div>
                   <p className="text-gray-400 text-sm">Sent</p>
-                  <p className="text-2xl font-bold">{sentCount}</p>
+                  <p className="text-2xl font-bold">{counts.sent}</p>
                 </div>
                 <div className="p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20 mb-2">
                     <ArrowDownLeft size={20} className="text-green-500" />
                   </div>
                   <p className="text-gray-400 text-sm">Received</p>
-                  <p className="text-2xl font-bold">{receivedCount}</p>
+                  <p className="text-2xl font-bold">{counts.received}</p>
                 </div>
                 <div className="p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-500/20 mb-2">
                     <div className="w-5 h-5 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin"></div>
                   </div>
                   <p className="text-gray-400 text-sm">Pending</p>
-                  <p className="text-2xl font-bold">{pendingCount}</p>
+                  <p className="text-2xl font-bold">{counts.pending}</p>
                 </div>
               </div>
             </CardContent>
@@ -455,138 +498,146 @@ function Transaction() {
       </main>
 
       {/* Transaction Details Dialog */}
-      <Dialog
-        open={!!selectedTx}
-        onOpenChange={(open) => !open && setSelectedTx(null)}
-      >
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Transaction Details</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Complete information about this transaction
-            </DialogDescription>
-          </DialogHeader>
+      <Suspense fallback={null}>
+        <Dialog
+          open={!!selectedTx}
+          onOpenChange={(open) => !open && setSelectedTx(null)}
+        >
+          <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">
+                Transaction Details
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Complete information about this transaction
+              </DialogDescription>
+            </DialogHeader>
 
-          {selectedTx && (
-            <div className="space-y-4 mt-4">
-              <div className="p-4 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">Transaction Type</span>
-                  <span className="capitalize font-medium flex items-center">
-                    {selectedTx.type === "send" ? (
-                      <>
-                        <ArrowUpRight className="h-4 w-4 text-red-500 mr-1" />
-                        <span>Send</span>
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownLeft className="h-4 w-4 text-green-500 mr-1" />
-                        <span>Receive</span>
-                      </>
-                    )}
-                  </span>
+            {selectedTx && (
+              <div className="space-y-4 mt-4">
+                <div className="p-4 rounded-lg bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">Transaction Type</span>
+                    <span className="capitalize font-medium flex items-center">
+                      {selectedTx.type === "send" ? (
+                        <>
+                          <ArrowUpRight className="h-4 w-4 text-red-500 mr-1" />
+                          <span>Send</span>
+                        </>
+                      ) : (
+                        <>
+                          <ArrowDownLeft className="h-4 w-4 text-green-500 mr-1" />
+                          <span>Receive</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">Amount</span>
+                    <span className="font-medium">
+                      {selectedTx.amount} {selectedTx.currency}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">Value (INR)</span>
+                    <span className="font-medium">
+                      ₹{selectedTx.valueInr.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Status</span>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(
+                        selectedTx.status
+                      )}`}
+                    >
+                      {selectedTx.status.charAt(0).toUpperCase() +
+                        selectedTx.status.slice(1)}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">Amount</span>
-                  <span className="font-medium">
-                    {selectedTx.amount} {selectedTx.currency}
-                  </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-400 text-sm">Date & Time</span>
+                    <p className="font-medium">
+                      {formatDate(selectedTx.timestamp)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-sm">
+                      Transaction Fee
+                    </span>
+                    <p className="font-medium">
+                      {selectedTx.fee} {selectedTx.currency}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">Value (INR)</span>
-                  <span className="font-medium">
-                    ₹{selectedTx.valueInr.toLocaleString()}
-                  </span>
+                <div>
+                  <span className="text-gray-400 text-sm">From</span>
+                  <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
+                    {selectedTx.senderAddress}
+                  </div>
                 </div>
 
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Status</span>
-                  <span
-                    className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(
-                      selectedTx.status
-                    )}`}
+                <div>
+                  <span className="text-gray-400 text-sm">To</span>
+                  <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
+                    {selectedTx.recipientAddress}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm">
+                    Transaction Hash
+                  </span>
+                  <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto flex justify-between items-center">
+                    <span className="truncate pr-2">{selectedTx.hash}</span>
+                    <button
+                      className="p-1 hover:bg-gray-700 rounded-full transition-all duration-300 flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(
+                          `https://etherscan.io/tx/${selectedTx.hash}`,
+                          "_blank"
+                        );
+                      }}
+                      title="View on Explorer"
+                    >
+                      <ExternalLink className="h-4 w-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 hover:bg-gray-800"
+                    onClick={() => setSelectedTx(null)}
                   >
-                    {selectedTx.status.charAt(0).toUpperCase() +
-                      selectedTx.status.slice(1)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-gray-400 text-sm">Date & Time</span>
-                  <p className="font-medium">
-                    {formatDate(selectedTx.timestamp)}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-sm">Transaction Fee</span>
-                  <p className="font-medium">
-                    {selectedTx.fee} {selectedTx.currency}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-gray-400 text-sm">From</span>
-                <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
-                  {selectedTx.senderAddress}
-                </div>
-              </div>
-
-              <div>
-                <span className="text-gray-400 text-sm">To</span>
-                <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto">
-                  {selectedTx.recipientAddress}
-                </div>
-              </div>
-
-              <div>
-                <span className="text-gray-400 text-sm">Transaction Hash</span>
-                <div className="mt-1 font-mono text-xs bg-black/50 p-2 rounded-md overflow-x-auto flex justify-between items-center">
-                  <span className="truncate pr-2">{selectedTx.hash}</span>
-                  <button
-                    className="p-1 hover:bg-gray-700 rounded-full transition-all duration-300 flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    Close
+                  </Button>
+                  <Button
+                    className="bg-crypto-blue hover:bg-crypto-blue/90"
+                    onClick={() => {
                       window.open(
                         `https://etherscan.io/tx/${selectedTx.hash}`,
                         "_blank"
                       );
                     }}
-                    title="View on Explorer"
                   >
-                    <ExternalLink className="h-4 w-4 text-gray-400" />
-                  </button>
+                    View on Explorer <ExternalLink className="ml-1 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-
-              <div className="pt-4 flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  className="border-gray-700 hover:bg-gray-800"
-                  onClick={() => setSelectedTx(null)}
-                >
-                  Close
-                </Button>
-                <Button
-                  className="bg-crypto-blue hover:bg-crypto-blue/90"
-                  onClick={() => {
-                    window.open(
-                      `https://etherscan.io/tx/${selectedTx.hash}`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  View on Explorer <ExternalLink className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </DialogContent>
+        </Dialog>
+      </Suspense>
     </div>
   );
 }
