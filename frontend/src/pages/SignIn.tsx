@@ -1,10 +1,29 @@
-import React, { useContext, useState } from "react";
+import React, {
+  useContext,
+  useState,
+  useCallback,
+  Suspense,
+  lazy,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { LoginContext } from "@/context/LoginContext";
+
+// Lazy load icons
+const MailIcon = lazy(() =>
+  import("lucide-react").then((mod) => ({ default: mod.Mail }))
+);
+const LockIcon = lazy(() =>
+  import("lucide-react").then((mod) => ({ default: mod.Lock }))
+);
+const EyeIcon = lazy(() =>
+  import("lucide-react").then((mod) => ({ default: mod.Eye }))
+);
+const EyeOffIcon = lazy(() =>
+  import("lucide-react").then((mod) => ({ default: mod.EyeOff }))
+);
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -14,50 +33,42 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const url = "https://payzee.onrender.com";
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+  const handleSignIn = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${url}/login?email=${email}&password=${password}`
-      );
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message);
+      if (!email || !password) {
+        toast.error("Please fill in all fields");
         return;
       }
 
-      setName(data.user.name);
-      if (data.user.account) {
-        if (data.user.account.walletAddress) {
-          console.log(data.user.account.walletAddress);
-          setWalletAddress(data.user.account.walletAddress);
-        } else {
-          setWalletAddress("");
-          console.log("No wallet address found");
-        }
-      } else {
-        setWalletAddress("");
-      }
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `${url}/login?email=${encodeURIComponent(
+            email
+          )}&password=${encodeURIComponent(password)}`
+        );
+        const data = await res.json();
 
-      toast.success("Login successful! Redirecting...");
-      setTimeout(() => {
-        navigate("/dashboard", {
-          state: data,
-        });
-      }, 1000);
-    } catch (error) {
-      toast.error("Login failed. Try again.");
-    } finally {
-      setLoading(false); // stop loader after request completes
-    }
-  };
+        if (!res.ok) {
+          toast.error(data.message || "Login failed");
+          return;
+        }
+
+        setName(data.user?.name || "");
+        setWalletAddress(data.user?.account?.walletAddress || "");
+
+        toast.success("Login successful! Redirecting...");
+        setTimeout(() => navigate("/dashboard", { state: data }), 1000);
+      } catch (err) {
+        toast.error("Login failed. Try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email, password, navigate, setName, setWalletAddress]
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-crypto-darker">
@@ -67,7 +78,7 @@ const SignIn = () => {
           <p className="text-gray-400">Sign in to access your account</p>
         </div>
 
-        <form onSubmit={handleSignIn} className="space-y-6">
+        <form onSubmit={handleSignIn} className="space-y-6" aria-busy={loading}>
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -76,7 +87,13 @@ const SignIn = () => {
               Email address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <Suspense
+                fallback={
+                  <span className="absolute left-3 top-3 h-5 w-5 bg-gray-400 rounded-full" />
+                }
+              >
+                <MailIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              </Suspense>
               <Input
                 id="email"
                 type="email"
@@ -85,6 +102,7 @@ const SignIn = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-invalid={!email ? "true" : "false"}
               />
             </div>
           </div>
@@ -105,7 +123,13 @@ const SignIn = () => {
               </Link>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <Suspense
+                fallback={
+                  <span className="absolute left-3 top-3 h-5 w-5 bg-gray-400 rounded-full" />
+                }
+              >
+                <LockIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              </Suspense>
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -114,17 +138,25 @@ const SignIn = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                aria-invalid={!password ? "true" : "false"}
               />
               <button
                 type="button"
                 className="absolute right-3 top-3 text-gray-400"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
+                <Suspense
+                  fallback={
+                    <span className="h-5 w-5 bg-gray-400 rounded-full" />
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </Suspense>
               </button>
             </div>
           </div>
